@@ -44,6 +44,7 @@ void displayListings (housingRec housingList[], int count);
 string convertStatusToString (status currentStatus);
 char checkMenuChoice (char& menuChoice);
 char displayMenu ();
+void menuAction (char menuChoice, housingRec housingList[], int listingCount);
 /******************************************************************************
 //  FUNCTION:	  main
 //  DESCRIPTION:  Processes each line in the vehicles file 
@@ -66,14 +67,10 @@ int main()
     } while ( (loadExisting == 'Y') && (loadExisting == 'N') );   */
     
     // read listing data 
-    readListings (housingList, listingCount);
-    
-    if (listingCount > 0){  //display data in file and menu if there is data in it
-		displayListings (housingList, listingCount);
-		menuChoice = displayMenu ();
-		checkMenuChoice (menuChoice);		
-		cout << "Menu Choice is " << menuChoice << endl;
-	} //end if
+    readListings (housingList, listingCount);      
+	menuChoice = displayMenu ();
+	checkMenuChoice (menuChoice);	 	
+	menuAction (menuChoice, housingList, listingCount);	
 	system ("PAUSE");
     return 0;
 }  // end main
@@ -149,13 +146,12 @@ void displayListings (housingRec housingList[], int count)
        << setw(21) << housingList[num].realtyCompany << endl;			
 }   // end for
       
-  cout << endl;
-  system ("PAUSE");
+  cout << endl;  
   return;
 } // end displayListings
 
 // **************************************************************************
-// FUNCTION:     displayListings 
+// FUNCTION:     convertStatusToString 
 // DESCRIPTION:  Displays data for all listings, one per line
 // INPUT:        Parameter:  patientList - data for all patients
 //                           num - count of patients stored in patientList
@@ -175,7 +171,7 @@ return statusString;
 } // end of convertStatusToString
 
 // **************************************************************************
-// FUNCTION:     displayListings 
+// FUNCTION:     displayMenu 
 // DESCRIPTION:  Displays data for all listings, one per line
 // INPUT:        Parameter:  patientList - data for all patients
 //                           num - count of patients stored in patientList
@@ -206,11 +202,40 @@ return menuChoice;
 // **************************************************************************
 char checkMenuChoice (char& menuChoice)
 {	
-do { //loop until valid input 	
+while( (menuChoice != 'D') && (menuChoice != 'A') && (menuChoice != 'R') && (menuChoice != 'E') ) { //loop until valid input 	
 	if ( (menuChoice != 'D') && (menuChoice != 'A') && (menuChoice != 'R') && (menuChoice != 'E') )
 				cout << "Invalid Input- Please select D, A, R or E" << endl;
 				menuChoice = displayMenu();
-} while( (menuChoice != 'D') && (menuChoice != 'A') && (menuChoice != 'R') && (menuChoice != 'E') );   // end while 
+}    // end while 
 
 return menuChoice;
 } // end of checkMenuChoice
+
+// **************************************************************************
+// FUNCTION:     menuAction 
+// DESCRIPTION:  Displays data for all listings, one per line
+// INPUT:        Parameter:  patientList - data for all patients
+//                           num - count of patients stored in patientList
+// **************************************************************************
+void menuAction (char menuChoice, housingRec housingList[], int listingCount)
+{
+switch (menuChoice) {
+	case 'D':  //Display All
+		cout << "You choose D " << endl;
+		if (listingCount > 0)
+			displayListings (housingList, listingCount);
+		else 
+			cout << "There are no records in the file." << endl;
+		break;
+	case 'A':  //Add a Listing
+		cout << "You choose A " << endl;
+		break;
+	case 'R': // Remove a Listing
+		cout << "You choose R " << endl;
+		break;
+	case 'E': // Exit
+		cout << "You choose E " << endl;		
+		break;
+} //end switch
+
+} // end of menuAction
