@@ -25,10 +25,13 @@ FUNCTIONS:	 main - Opens file, sends output, and closes file
 using namespace std;
 
 //global constants
+const string DESCRIPTION = "This program does x, y, and z.",
+             DEVELOPER = "Frank Pigeon",
+             CLASSNUM = "CS362",
+             ASSIGNMENT = "Week 4";
 const string LISTINGS_FILENAME = "LISTINGS.TXT";  //input file 
 enum status {AVAILABLE, CONTRACT, SOLD}; // listing status options
 const int MAX_LISTINGS = 750; // maximum number of patients
-
 // Defines structure to hold housing listing information
 struct  housingRec { //define structure
     int mlsNum; //MLS number
@@ -39,7 +42,9 @@ struct  housingRec { //define structure
 }; // end housingRec definition    
           
 //prototypes
+void showDescription (string DESCRIPTION);
 void readListings(housingRec housingList[], int& num);
+void loadExistingData (housingRec housingList[], int& listingCount);
 void displayListings (housingRec housingList[], int count);
 string convertStatusToString (status currentStatus);
 char checkMenuChoice (char& menuChoice);
@@ -52,28 +57,37 @@ void menuAction (char menuChoice, housingRec housingList[], int listingCount);
 //  CALLS TO:	  selectSort, binarySearch, alphaChecker, numChecker, displayError
 ******************************************************************************/
 int main()
-{    
-    //local variables
-    //char loadExisting;         
+{
+    //local variables    
     housingRec housingList[MAX_LISTINGS];
     int listingCount;
-	char menuChoice;       
-    
-    //ask user to use existing data file
-   /* do {
-        cout << "Load exisiting data from a file (Y/N)? ";
-        cin >> loadExisting;
-        loadExisting = toupper (loadExisting);
-    } while ( (loadExisting == 'Y') && (loadExisting == 'N') );   */
-    
-    // read listing data 
-    readListings (housingList, listingCount);      
+	char menuChoice;
+
+    showDescription (DESCRIPTION); 
+	loadExistingData (housingList, listingCount);    
 	menuChoice = displayMenu ();
 	checkMenuChoice (menuChoice);	 	
 	menuAction (menuChoice, housingList, listingCount);	
 	system ("PAUSE");
     return 0;
 }  // end main
+//---------------------------------------------------------------------------
+    
+// showDescription Function    
+
+//---------------------------------------------------------------------------- 
+
+void showDescription (string DESCRIPTION){
+    cout << endl;
+    cout << "------------------------------------------------------" << endl;
+    cout << DESCRIPTION << endl;
+    cout << "Developed by " << DEVELOPER << endl;
+    cout << "Class: " << CLASSNUM << endl;
+    cout << "Assn: " << ASSIGNMENT << endl;
+    cout << "------------------------------------------------------" << endl;
+    cout << endl << endl;
+} // end of showDescription
+
 //---------------------------------------------------------------------------
     
 // readListings Function    
@@ -239,3 +253,42 @@ switch (menuChoice) {
 } //end switch
 
 } // end of menuAction
+
+// **************************************************************************
+// FUNCTION:     menuAction 
+// DESCRIPTION:  Displays data for all listings, one per line
+// INPUT:        Parameter:  patientList - data for all patients
+//                           num - count of patients stored in patientList
+// **************************************************************************
+// ask user to use existing data file
+void loadExistingData (housingRec housingList[], int& listingCount) {
+//local variables
+ofstream outData; // output file stream
+char loadExisting,
+	 errorChoice;
+	do {
+        cout << "Load exisiting data from a file (Y/N)? ";
+        cin >> loadExisting;
+        loadExisting = toupper (loadExisting);
+    } while ( (loadExisting != 'Y') && (loadExisting != 'N') ); 
+
+	if (loadExisting == 'Y') { //append data to input file
+		readListings (housingList, listingCount);		
+		outData.open (LISTINGS_FILENAME.c_str() , ios::app );
+	
+		// if file doesn't open present error and ask user if they
+		// wish to exit or start with no data    
+		if (!outData) { 
+			do {
+				cout << endl;
+				cout << "Error opening data file" << endl ;
+				cout << "Do you wish to exit or proceed with no data? (Q-QUIT or C-Continue)";
+				cin >> errorChoice;
+				errorChoice = toupper (errorChoice);
+			} while ( (errorChoice == 'Q') && (errorChoice == 'C') );
+		} // end if no file
+	} // end of if load existing data
+	else if (loadExisting == 'N') //create new  input file 
+		outData.open (LISTINGS_FILENAME.c_str() );
+	return;
+} // end of function loadExistingData
