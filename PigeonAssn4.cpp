@@ -50,6 +50,7 @@ string convertStatusToString (status currentStatus);
 char checkMenuChoice (char& menuChoice);
 char displayMenu ();
 void menuAction (char menuChoice, housingRec housingList[], int listingCount);
+void addListings (housingRec housingList[], int count);
 /******************************************************************************
 //  FUNCTION:	  main
 //  DESCRIPTION:  Processes each line in the vehicles file 
@@ -153,11 +154,11 @@ void displayListings (housingRec housingList[], int count)
  cout << "------  -------  ---------  ----------  -------------------" << endl;
 
  for (int num = 0; num < count; num++) {
-      cout << setw(5) << housingList[num].mlsNum
-       << setw(9) << housingList[num].price
-       << setw(11) << convertStatusToString (housingList[num].currentStatus)
-       << setw(12) << housingList[num].zip
-       << setw(21) << housingList[num].realtyCompany << endl;			
+      cout << right << setw(5) << housingList[num].mlsNum
+       << setw(9) << housingList[num].price << "  "
+       << left << setw(11) << convertStatusToString (housingList[num].currentStatus)
+       << right << setw(10) << housingList[num].zip << " " 
+       << left << setw(21) << housingList[num].realtyCompany << endl;			
 }   // end for
       
   cout << endl;  
@@ -202,7 +203,7 @@ char  menuChoice;
 	cout << "R - Remove a Listings" << endl;
 	cout << "E - Exit the Program" << endl;
 	cout << "---------------------------------------" << endl << endl;
-	cout << "Please choose an option from the menu: " << endl;
+	cout << "Please choose an option from the menu: ";
 	cin >> menuChoice;
 	menuChoice = toupper (menuChoice); //uppercase user input
 return menuChoice;
@@ -243,6 +244,7 @@ switch (menuChoice) {
 		break;
 	case 'A':  //Add a Listing
 		cout << "You choose A " << endl;
+		addListings (housingList, listingCount);
 		break;
 	case 'R': // Remove a Listing
 		cout << "You choose R " << endl;
@@ -255,7 +257,7 @@ switch (menuChoice) {
 } // end of menuAction
 
 // **************************************************************************
-// FUNCTION:     menuAction 
+// FUNCTION:     loadExistingData 
 // DESCRIPTION:  Displays data for all listings, one per line
 // INPUT:        Parameter:  patientList - data for all patients
 //                           num - count of patients stored in patientList
@@ -274,8 +276,8 @@ char loadExisting,
 
 	if (loadExisting == 'Y') { //append data to input file
 		readListings (housingList, listingCount);		
-		outData.open (LISTINGS_FILENAME.c_str() , ios::app );
-	
+		outData.open (LISTINGS_FILENAME.c_str() , ios::app );	
+		
 		// if file doesn't open present error and ask user if they
 		// wish to exit or start with no data    
 		if (!outData) { 
@@ -292,3 +294,68 @@ char loadExisting,
 		outData.open (LISTINGS_FILENAME.c_str() );
 	return;
 } // end of function loadExistingData
+
+// **************************************************************************
+// FUNCTION:     loadExistingData 
+// DESCRIPTION:  Displays data for all listings, one per line
+// INPUT:        Parameter:  patientList - data for all patients
+//                           num - count of patients stored in patientList
+// **************************************************************************
+void addListings (housingRec housingList[], int count)
+{  
+	ofstream outData; // output file stream
+	int newRecCount = count;
+	char newListing;
+	int mls;
+	double price;
+	int temp;	
+	string zip, realtor;
+
+	outData.open (LISTINGS_FILENAME.c_str() , ios::app );
+	
+	while ( (newRecCount >= MAX_LISTINGS) || ( newListing != 'N' ) ) {            
+		cout << "Enter MLS Number: ";
+		cin >> mls;
+		housingList[newRecCount].mlsNum = mls;
+		outData << housingList[newRecCount].mlsNum;
+
+		cout << "Enter asking price: ";
+		cin >> price;
+		housingList[newRecCount].price = price;
+		outData << setw(7) << housingList[newRecCount].price;
+
+		cout << "Enter the status (0-Available, 1-Contract, or 2-Sold): ";
+		cin >>  temp;
+		housingList[newRecCount].currentStatus = static_cast <status> (temp);		
+		outData << setw(2) << housingList[newRecCount].currentStatus;				
+
+		cout << "Enter the ZIP code (5digits-4digit): ";
+		cin >>  zip;
+		housingList[newRecCount].zip = zip;
+		outData << setw(11) <<  housingList[newRecCount].zip;
+		inData.ignore (0, '\n'); //ignore remainder of text
+
+		cout << "Enter the Realtor:  ";
+		//cin >> realtor;
+		//cin.getline(realtor, 20);
+		getline (cin, realtor);		
+		inData.ignore (0, '\n'); //ignore remainder of text 			
+		
+		housingList[newRecCount].realtyCompany = realtor;
+		outData << left << housingList[newRecCount].realtyCompany;
+
+		outData << endl; // new line
+		newRecCount++;     // increment listing count
+		cout << endl;
+		
+		do { //prompt for adding a new listing with error check
+			cout << "Would you like to enter another listing (Y/N)?: ";
+			cin >> newListing;
+			newListing = toupper (newListing);
+		} while ( (newListing != 'Y') && (newListing != 'N') );
+
+		}  // end while
+		 
+     
+return;
+} // end displayListings
