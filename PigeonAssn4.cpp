@@ -314,10 +314,10 @@ void addListings (housingRec housingList[], int count)
 	outData.open (LISTINGS_FILENAME.c_str() , ios::app );
 	
 	while ( (newRecCount >= MAX_LISTINGS) || ( newListing != 'N' ) ) {            
-		cout << "Enter MLS Number: ";
+		cout << "Enter MLS Number:   ";
 		cin >> mls;
 		housingList[newRecCount].mlsNum = mls;
-		outData << housingList[newRecCount].mlsNum;
+		outData << right << housingList[newRecCount].mlsNum;
 
 		cout << "Enter asking price: ";
 		cin >> price;
@@ -332,22 +332,20 @@ void addListings (housingRec housingList[], int count)
 		cout << "Enter the ZIP code (5digits-4digit): ";
 		cin >>  zip;
 		housingList[newRecCount].zip = zip;
+		cin.ignore();
 		outData << setw(11) <<  housingList[newRecCount].zip;
-		inData.ignore (0, '\n'); //ignore remainder of text
-
-		cout << "Enter the Realtor:  ";
-		//cin >> realtor;
-		//cin.getline(realtor, 20);
-		getline (cin, realtor);		
-		inData.ignore (0, '\n'); //ignore remainder of text 			
 		
+
+		cout << "Enter the Realtor:  ";		
+		getline (cin, realtor);		
 		housingList[newRecCount].realtyCompany = realtor;
+		outData << " ";
 		outData << left << housingList[newRecCount].realtyCompany;
 
 		outData << endl; // new line
 		newRecCount++;     // increment listing count
+
 		cout << endl;
-		
 		do { //prompt for adding a new listing with error check
 			cout << "Would you like to enter another listing (Y/N)?: ";
 			cin >> newListing;
