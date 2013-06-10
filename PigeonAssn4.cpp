@@ -51,12 +51,13 @@ void displayListings (housingRec housingList[], int count);
 string convertStatusToString (status currentStatus);
 char checkMenuChoice (char& menuChoice);
 char displayMenu ();
-void menuAction (char menuChoice, housingRec housingList[], int listingCount);
+void menuAction (char menuChoice, housingRec housingList[], int listingCount, bool& quit);
 void addListings (housingRec housingList[], int count);
 void displayMLS (housingRec housingList[], int count);
 int binarySearch (int target, int listSize, int searchList[]);
 //void deleteItem (int itemToDel, int& listSize, housingRec list[], bool& deleted);
 void deleteItem (int itemToDel, int& listingCount, housingRec housingList[], bool& deleted);
+void writeListings(housingRec housingList[], int count);
 
 /******************************************************************************
 //  FUNCTION:	  main
@@ -66,16 +67,19 @@ void deleteItem (int itemToDel, int& listingCount, housingRec housingList[], boo
 ******************************************************************************/
 int main()
 {
-    //local variables    
-    housingRec housingList[MAX_LISTINGS];
+    //local variables	
+    housingRec housingList[MAX_LISTINGS]; //array of records storing Listings
     int listingCount;
 	char menuChoice;
+	bool quit = false;
 
     showDescription (DESCRIPTION); 
 	loadExistingData (housingList, listingCount);    
-	menuChoice = displayMenu ();
-	checkMenuChoice (menuChoice);	 	
-	menuAction (menuChoice, housingList, listingCount);		
+	do {
+		menuChoice = displayMenu ();
+		checkMenuChoice (menuChoice);	 	
+		menuAction (menuChoice, housingList, listingCount, quit);
+	} while (quit == false);
 	system ("PAUSE");
     return 0;
 }  // end main
@@ -164,9 +168,9 @@ void displayListings (housingRec housingList[], int count)
       cout << right << setw(5) << housingList[num].mlsNum
        << setw(9) << housingList[num].price << "  "
        << left << setw(11) << convertStatusToString (housingList[num].currentStatus)
-       << right << setw(10) << housingList[num].zip << " " 
-       << left << setw(21) << housingList[num].realtyCompany << endl;			
-}   // end for
+       << right << setw(10) << housingList[num].zip << " "
+       << left << setw(21) << housingList[num].realtyCompany << endl;	
+} // end for
       
   cout << endl;  
   return;
@@ -239,10 +243,11 @@ return menuChoice;
 // INPUT:        Parameter:  patientList - data for all patients
 //                           num - count of patients stored in patientList
 // **************************************************************************
-void menuAction (char menuChoice, housingRec housingList[], int listingCount)
+void menuAction (char menuChoice, housingRec housingList[], int listingCount, bool& quit)
 {
  int mlsDelete; //user input to delete an MLS Listing
  bool deleted; // index to delete
+ char commitChange; // user input to commit changes
 
 switch (menuChoice) {
 	case 'D':  //Display All
@@ -267,11 +272,17 @@ switch (menuChoice) {
 		else { // delete the listing            
             cout << "MLS Listing " << mlsDelete <<
                  " was deleted successfully" << endl;
-			displayListings (housingList, listingCount);
+			//displayListings (housingList, listingCount);
          } // end else
 		break;
 	case 'E': // Exit
-		cout << "You choose E " << endl;		
+		cout << "You choose E " << endl;
+		cout << "Do you want to commit changes to file (Y/N)?: ";
+		cin >> commitChange;
+		commitChange = toupper (commitChange);
+		if (commitChange == 'Y')
+			writeListings(housingList, listingCount);
+		quit = true;
 		break;
 } //end switch
 
@@ -313,18 +324,20 @@ char loadExisting,
 	} // end of if load existing data
 	else if (loadExisting == 'N') //create new  input file 
 		outData.open (LISTINGS_FILENAME.c_str() );
+	
+	outData.close();
 	return;
 } // end of function loadExistingData
 
 // **************************************************************************
-// FUNCTION:     loadExistingData 
+// FUNCTION:     addListings 
 // DESCRIPTION:  Displays data for all listings, one per line
 // INPUT:        Parameter:  patientList - data for all patients
 //                           num - count of patients stored in patientList
 // **************************************************************************
 void addListings (housingRec housingList[], int count)
 {  
-	ofstream outData; // output file stream
+	//ofstream outData; // output file stream
 	int newRecCount = count;
 	char newListing;
 	int mls;
@@ -332,37 +345,37 @@ void addListings (housingRec housingList[], int count)
 	int temp;	
 	string zip, realtor;
 
-	outData.open (LISTINGS_FILENAME.c_str() , ios::app );	
+	//outData.open (LISTINGS_FILENAME.c_str() , ios::app );	
 
 	while ( (newRecCount >= MAX_LISTINGS) || ( newListing != 'N' ) ) {            
-		outData << endl; // new line
+		//outData << endl; // new line
 		cout << "Enter MLS Number:   ";
 		cin >> mls;
 		housingList[newRecCount].mlsNum = mls;
-		outData << right << housingList[newRecCount].mlsNum;
+		//outData << right << housingList[newRecCount].mlsNum;
 
 		cout << "Enter asking price: ";
 		cin >> price;
 		housingList[newRecCount].price = price;
-		outData << setw(7) << housingList[newRecCount].price;
+		//outData << setw(7) << housingList[newRecCount].price;
 
 		cout << "Enter the status (0-Available, 1-Contract, or 2-Sold): ";
 		cin >>  temp;
 		housingList[newRecCount].currentStatus = static_cast <status> (temp);		
-		outData << setw(2) << housingList[newRecCount].currentStatus;				
+		//outData << setw(2) << housingList[newRecCount].currentStatus;				
 
 		cout << "Enter the ZIP code (5digits-4digit): ";
 		cin >>  zip;
 		housingList[newRecCount].zip = zip;
 		cin.ignore();
-		outData << setw(11) <<  housingList[newRecCount].zip;
+		//outData << setw(11) <<  housingList[newRecCount].zip;
 		
 
 		cout << "Enter the Realtor:  ";		
 		getline (cin, realtor);		
 		housingList[newRecCount].realtyCompany = realtor;
-		outData << " ";
-		outData << left << housingList[newRecCount].realtyCompany;		
+		//outData << " ";
+		//outData << left << housingList[newRecCount].realtyCompany;		
 		
 		newRecCount++;     // increment listing count
 
@@ -375,7 +388,7 @@ void addListings (housingRec housingList[], int count)
 
 	}  // end while
 		
-		outData.close(); //close the outfile
+		//outData.close(); //close the outfile
      
 return;
 } // end addListings
@@ -406,13 +419,7 @@ void deleteItem (int itemToDel, int& listingCount, housingRec housingList[], boo
 	 cout << "listingcount is " << listingCount << endl;
      //copy the record in the last occuppied index location within the array over the record
 	 
-     housingList[placeFound] = housingList[listingCount - 1];	 
-	 /*outData << right << housingList[placeFound].mlsNum;
-	 outData << setw(7) << housingList[placeFound].price;
-	 outData << setw(2) << housingList[placeFound].currentStatus;
-	 outData << setw(11) <<  housingList[placeFound].zip;
-	 outData << " ";
-	 outData << left << housingList[placeFound].realtyCompany;*/
+     housingList[placeFound] = housingList[listingCount - 1];	 	 
 	 cout << "MLS of placefound is now " << housingList[placeFound].mlsNum << endl;
      //for (int num = placeFound + 1; num < listingCount; num++)
      //housingList[num - 1] = housingList[num];     // Decrement list size
@@ -423,10 +430,10 @@ void deleteItem (int itemToDel, int& listingCount, housingRec housingList[], boo
 
      deleted = true;       
   }  // end if
-  cout << "listingcount out of loop is " << listingCount << endl;
-  //outData.close(); //close the outfile      
+  cout << "listingcount out of loop is " << listingCount << endl;  
   return;
 } //end of deleteItem
+
 // **************************************************************************
 // FUNCTION:     displayMLS 
 // DESCRIPTION:  Displays data for all listings, one per line
@@ -441,7 +448,7 @@ void displayMLS (housingRec housingList[], int count)
  cout << "--------------------------------------------------" << endl;
 
  for (int num = 0; num < count; num++) {
-      cout << housingList[num].mlsNum << setw(7);
+      cout << right << housingList[num].mlsNum << setw(8);
 	  newLine++;
 	  if (newLine == 6) { // add a new line after displaying 6 listings
 			cout << endl;
@@ -480,3 +487,19 @@ int binarySearch (int target,                   // number searching for
 
   return infoPlace;
 }
+void writeListings(housingRec housingList[], int count)
+{
+//local variables  
+  ofstream outData;         // input file stream  
+  outData.open (LISTINGS_FILENAME.c_str() );
+  
+  for (int num = 0; num < count; num++) {
+      outData << right << housingList[num].mlsNum 
+       << setw(7) << housingList[num].price  
+       << setw(2) << housingList[num].currentStatus
+       << setw(11) << housingList[num].zip
+       << left  << housingList[num].realtyCompany << endl;			
+}   // end for     
+  outData.close();
+  return;
+} // end of writeListings
