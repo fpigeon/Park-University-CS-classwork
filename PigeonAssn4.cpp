@@ -29,6 +29,8 @@ const string DESCRIPTION = "This program does x, y, and z.",
              DEVELOPER = "Frank Pigeon",
              CLASSNUM = "CS362",
              ASSIGNMENT = "Week 4";
+const int NOT_FOUND = -1;  // non-index value indicates 
+                           // value not found in list
 const string LISTINGS_FILENAME = "LISTINGS.TXT";  //input file 
 enum status {AVAILABLE, CONTRACT, SOLD}; // listing status options
 const int MAX_LISTINGS = 750; // maximum number of patients
@@ -51,6 +53,11 @@ char checkMenuChoice (char& menuChoice);
 char displayMenu ();
 void menuAction (char menuChoice, housingRec housingList[], int listingCount);
 void addListings (housingRec housingList[], int count);
+void displayMLS (housingRec housingList[], int count);
+int binarySearch (int target, int listSize, int searchList[]);
+//void deleteItem (int itemToDel, int& listSize, housingRec list[], bool& deleted);
+void deleteItem (int itemToDel, int& listingCount, housingRec housingList[], bool& deleted);
+
 /******************************************************************************
 //  FUNCTION:	  main
 //  DESCRIPTION:  Processes each line in the vehicles file 
@@ -68,7 +75,7 @@ int main()
 	loadExistingData (housingList, listingCount);    
 	menuChoice = displayMenu ();
 	checkMenuChoice (menuChoice);	 	
-	menuAction (menuChoice, housingList, listingCount);	
+	menuAction (menuChoice, housingList, listingCount);		
 	system ("PAUSE");
     return 0;
 }  // end main
@@ -234,6 +241,9 @@ return menuChoice;
 // **************************************************************************
 void menuAction (char menuChoice, housingRec housingList[], int listingCount)
 {
+ int mlsDelete; //user input to delete an MLS Listing
+ bool deleted; // index to delete
+
 switch (menuChoice) {
 	case 'D':  //Display All
 		cout << "You choose D " << endl;
@@ -248,6 +258,17 @@ switch (menuChoice) {
 		break;
 	case 'R': // Remove a Listing
 		cout << "You choose R " << endl;
+		displayMLS (housingList, listingCount);
+		cout << "Enter MLS Listing to delete: ";
+		cin >> mlsDelete;
+		deleteItem (mlsDelete, listingCount, housingList, deleted);
+		if (deleted == false) //display error if not found
+            cout << mlsDelete << " not found in list" << endl;
+		else { // delete the listing            
+            cout << "MLS Listing " << mlsDelete <<
+                 " was deleted successfully" << endl;
+			displayListings (housingList, listingCount);
+         } // end else
 		break;
 	case 'E': // Exit
 		cout << "You choose E " << endl;		
@@ -311,9 +332,10 @@ void addListings (housingRec housingList[], int count)
 	int temp;	
 	string zip, realtor;
 
-	outData.open (LISTINGS_FILENAME.c_str() , ios::app );
-	
+	outData.open (LISTINGS_FILENAME.c_str() , ios::app );	
+
 	while ( (newRecCount >= MAX_LISTINGS) || ( newListing != 'N' ) ) {            
+		outData << endl; // new line
 		cout << "Enter MLS Number:   ";
 		cin >> mls;
 		housingList[newRecCount].mlsNum = mls;
@@ -340,9 +362,8 @@ void addListings (housingRec housingList[], int count)
 		getline (cin, realtor);		
 		housingList[newRecCount].realtyCompany = realtor;
 		outData << " ";
-		outData << left << housingList[newRecCount].realtyCompany;
-
-		outData << endl; // new line
+		outData << left << housingList[newRecCount].realtyCompany;		
+		
 		newRecCount++;     // increment listing count
 
 		cout << endl;
@@ -352,8 +373,110 @@ void addListings (housingRec housingList[], int count)
 			newListing = toupper (newListing);
 		} while ( (newListing != 'Y') && (newListing != 'N') );
 
-		}  // end while
-		 
+	}  // end while
+		
+		outData.close(); //close the outfile
      
 return;
-} // end displayListings
+} // end addListings
+
+// **************************************************************************
+// FUNCTION:     deleteItem 
+// DESCRIPTION:  Implementation of deleting an item from an ordered list
+// INPUT:        Parameter:  patientList - data for all patients
+//                           num - count of patients stored in patientList
+// **************************************************************************
+// Implementation of deleting an item from an ordered list
+void deleteItem (int itemToDel, int& listingCount, housingRec housingList[], bool& deleted)
+{  
+  int placeFound;               // index where found
+
+  deleted = false;              // item not found and deleted yet
+      
+  // Find where itemToDel is in list
+  placeFound = 0;                             // Start search at first index
+  
+  while ((placeFound < listingCount) &&           // While still values to search
+         (housingList[placeFound].mlsNum != itemToDel))     // and value not found
+            placeFound++;                        // increment index
+ 
+  //If itemToDel was Found, delete it
+  if (placeFound < listingCount) {                
+     cout << "place found is " << placeFound << endl;
+	 cout << "listingcount is " << listingCount << endl;
+     //copy the record in the last occuppied index location within the array over the record
+	 
+     housingList[placeFound] = housingList[listingCount - 1];	 
+	 /*outData << right << housingList[placeFound].mlsNum;
+	 outData << setw(7) << housingList[placeFound].price;
+	 outData << setw(2) << housingList[placeFound].currentStatus;
+	 outData << setw(11) <<  housingList[placeFound].zip;
+	 outData << " ";
+	 outData << left << housingList[placeFound].realtyCompany;*/
+	 cout << "MLS of placefound is now " << housingList[placeFound].mlsNum << endl;
+     //for (int num = placeFound + 1; num < listingCount; num++)
+     //housingList[num - 1] = housingList[num];     // Decrement list size
+     listingCount--;
+
+     // Zero out deleted last item
+     //housingList[listingCount] = 0;	// Optional
+
+     deleted = true;       
+  }  // end if
+  cout << "listingcount out of loop is " << listingCount << endl;
+  //outData.close(); //close the outfile      
+  return;
+} //end of deleteItem
+// **************************************************************************
+// FUNCTION:     displayMLS 
+// DESCRIPTION:  Displays data for all listings, one per line
+// INPUT:        Parameter:  patientList - data for all patients
+//                           num - count of patients stored in patientList
+// **************************************************************************
+void displayMLS (housingRec housingList[], int count)
+{
+ int newLine = 0; //for add a new line
+ cout << endl; 
+ cout << "These are the MLS Listings stored on file:" << endl;
+ cout << "--------------------------------------------------" << endl;
+
+ for (int num = 0; num < count; num++) {
+      cout << housingList[num].mlsNum << setw(7);
+	  newLine++;
+	  if (newLine == 6) { // add a new line after displaying 6 listings
+			cout << endl;
+			newLine = 0;
+	  }
+ }   // end for
+ cout << endl;  
+ return;
+} // end displayMLS
+
+// Function binarySearch returns the index in list where target is found
+// returns -1 if target NOT found in list
+
+int binarySearch (int target,                   // number searching for
+                  int listSize,                 // size of list
+                  int searchList[])             // list of numbers
+{
+   int infoPlace = NOT_FOUND;                   // index where target found
+   int high, low, middle;                       
+
+   low = 0;                                     // lower bound of area to search
+   high = listSize - 1;                         // upper bound of area to search
+
+   while ((low <= high) &&                      // still places to search AND
+          (infoPlace == NOT_FOUND)) {           // target not yet found
+
+          middle = (low + high) / 2;            // calculate middle index
+
+          if (target < searchList[middle])      // target less than middle value
+              high = middle - 1;
+          else if (target > searchList[middle]) //target more than middle value
+              low = middle + 1;
+          else
+              infoPlace = middle;               // target found
+  }     // end while
+
+  return infoPlace;
+}
