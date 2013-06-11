@@ -29,7 +29,7 @@ const string DESCRIPTION = "This program does x, y, and z.",
              DEVELOPER = "Frank Pigeon",
              CLASSNUM = "CS362",
              ASSIGNMENT = "Week 4";
-const int NOT_FOUND = -1;  // non-index value indicates 
+//const int NOT_FOUND = -1;  // non-index value indicates 
                            // value not found in list
 const string LISTINGS_FILENAME = "LISTINGS.TXT";  //input file 
 enum status {AVAILABLE, CONTRACT, SOLD}; // listing status options
@@ -51,11 +51,9 @@ void displayListings (housingRec housingList[], int count);
 string convertStatusToString (status currentStatus);
 char checkMenuChoice (char& menuChoice);
 char displayMenu ();
-void menuAction (char menuChoice, housingRec housingList[], int listingCount, bool& quit);
-void addListings (housingRec housingList[], int count);
+void menuAction (char menuChoice, housingRec housingList[], int& listingCount, bool& quit);
+void addListings (housingRec housingList[], int& count);
 void displayMLS (housingRec housingList[], int count);
-int binarySearch (int target, int listSize, int searchList[]);
-//void deleteItem (int itemToDel, int& listSize, housingRec list[], bool& deleted);
 void deleteItem (int itemToDel, int& listingCount, housingRec housingList[], bool& deleted);
 void writeListings(housingRec housingList[], int count);
 
@@ -160,6 +158,7 @@ void readListings(housingRec housingList[], int& num)
 void displayListings (housingRec housingList[], int count)
 {   
  cout << endl;
+ cout << "count in is " << count << endl;
  cout << setw(14) << "Asking" << setw(10) << "Listing" << endl;
  cout << "MLS#    Price    Status     Zip Code    Realtor" << endl;
  cout << "------  -------  ---------  ----------  -------------------" << endl;
@@ -243,7 +242,7 @@ return menuChoice;
 // INPUT:        Parameter:  patientList - data for all patients
 //                           num - count of patients stored in patientList
 // **************************************************************************
-void menuAction (char menuChoice, housingRec housingList[], int listingCount, bool& quit)
+void menuAction (char menuChoice, housingRec housingList[], int& listingCount, bool& quit)
 {
  int mlsDelete; //user input to delete an MLS Listing
  bool deleted; // index to delete
@@ -335,61 +334,48 @@ char loadExisting,
 // INPUT:        Parameter:  patientList - data for all patients
 //                           num - count of patients stored in patientList
 // **************************************************************************
-void addListings (housingRec housingList[], int count)
-{  
-	//ofstream outData; // output file stream
-	int newRecCount = count;
+void addListings (housingRec housingList[], int& count)
+{  		
 	char newListing;
 	int mls;
 	double price;
 	int temp;	
 	string zip, realtor;
-
-	//outData.open (LISTINGS_FILENAME.c_str() , ios::app );	
-
-	while ( (newRecCount >= MAX_LISTINGS) || ( newListing != 'N' ) ) {            
-		//outData << endl; // new line
+	
+	while ( (count >= MAX_LISTINGS) || ( newListing != 'N' ) ) {            		
 		cout << "Enter MLS Number:   ";
 		cin >> mls;
-		housingList[newRecCount].mlsNum = mls;
-		//outData << right << housingList[newRecCount].mlsNum;
+		housingList[count].mlsNum = mls;		
 
 		cout << "Enter asking price: ";
 		cin >> price;
-		housingList[newRecCount].price = price;
-		//outData << setw(7) << housingList[newRecCount].price;
+		housingList[count].price = price;		
 
 		cout << "Enter the status (0-Available, 1-Contract, or 2-Sold): ";
 		cin >>  temp;
-		housingList[newRecCount].currentStatus = static_cast <status> (temp);		
-		//outData << setw(2) << housingList[newRecCount].currentStatus;				
+		housingList[count].currentStatus = static_cast <status> (temp);				
 
 		cout << "Enter the ZIP code (5digits-4digit): ";
 		cin >>  zip;
-		housingList[newRecCount].zip = zip;
-		cin.ignore();
-		//outData << setw(11) <<  housingList[newRecCount].zip;
+		housingList[count].zip = zip;
+		cin.ignore();	
 		
-
 		cout << "Enter the Realtor:  ";		
 		getline (cin, realtor);		
-		housingList[newRecCount].realtyCompany = realtor;
-		//outData << " ";
-		//outData << left << housingList[newRecCount].realtyCompany;		
+		housingList[count].realtyCompany = realtor;				
 		
-		newRecCount++;     // increment listing count
+		count++;  // increment listing count
 
 		cout << endl;
 		do { //prompt for adding a new listing with error check
 			cout << "Would you like to enter another listing (Y/N)?: ";
 			cin >> newListing;
 			newListing = toupper (newListing);
+
 		} while ( (newListing != 'Y') && (newListing != 'N') );
 
-	}  // end while
-		
-		//outData.close(); //close the outfile
-     
+	}  // end while		
+		     
 return;
 } // end addListings
 
@@ -419,10 +405,10 @@ void deleteItem (int itemToDel, int& listingCount, housingRec housingList[], boo
 	 cout << "listingcount is " << listingCount << endl;
      //copy the record in the last occuppied index location within the array over the record
 	 
-     housingList[placeFound] = housingList[listingCount - 1];	 	 
+     //housingList[placeFound] = housingList[listingCount - 1];	 	 
 	 cout << "MLS of placefound is now " << housingList[placeFound].mlsNum << endl;
-     //for (int num = placeFound + 1; num < listingCount; num++)
-     //housingList[num - 1] = housingList[num];     // Decrement list size
+     for (int num = placeFound + 1; num < listingCount; num++)
+     housingList[num - 1] = housingList[num];     // Decrement list size
      listingCount--;
 
      // Zero out deleted last item
@@ -459,34 +445,12 @@ void displayMLS (housingRec housingList[], int count)
  return;
 } // end displayMLS
 
-// Function binarySearch returns the index in list where target is found
-// returns -1 if target NOT found in list
-
-int binarySearch (int target,                   // number searching for
-                  int listSize,                 // size of list
-                  int searchList[])             // list of numbers
-{
-   int infoPlace = NOT_FOUND;                   // index where target found
-   int high, low, middle;                       
-
-   low = 0;                                     // lower bound of area to search
-   high = listSize - 1;                         // upper bound of area to search
-
-   while ((low <= high) &&                      // still places to search AND
-          (infoPlace == NOT_FOUND)) {           // target not yet found
-
-          middle = (low + high) / 2;            // calculate middle index
-
-          if (target < searchList[middle])      // target less than middle value
-              high = middle - 1;
-          else if (target > searchList[middle]) //target more than middle value
-              low = middle + 1;
-          else
-              infoPlace = middle;               // target found
-  }     // end while
-
-  return infoPlace;
-}
+// **************************************************************************
+// FUNCTION:     writeListings 
+// DESCRIPTION:  Displays data for all listings, one per line
+// INPUT:        Parameter:  patientList - data for all patients
+//                           num - count of patients stored in patientList
+// **************************************************************************
 void writeListings(housingRec housingList[], int count)
 {
 //local variables  
@@ -498,7 +462,7 @@ void writeListings(housingRec housingList[], int count)
        << setw(7) << housingList[num].price  
        << setw(2) << housingList[num].currentStatus
        << setw(11) << housingList[num].zip
-       << left  << housingList[num].realtyCompany << endl;			
+       << left  << " " << housingList[num].realtyCompany << endl;			
 }   // end for     
   outData.close();
   return;
