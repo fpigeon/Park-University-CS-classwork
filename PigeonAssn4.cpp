@@ -305,8 +305,9 @@ switch (menuChoice) {
 		break;
 	case 'R': // Remove a Listing		
 		displayMLS (housingList, listingCount);
-		cout << "Enter MLS Listing to delete: ";
-		cin >> mlsDelete;
+		//cout << "Enter MLS Listing to delete: ";
+		//cin >> mlsDelete;
+		mlsDelete = MLSinput();
 		deleteItem (mlsDelete, listingCount, housingList, deleted);
 		if (deleted == false) //display error if not found
             cout << mlsDelete << " not found in list" << endl;
@@ -444,12 +445,12 @@ void deleteItem (int itemToDel, int& listingCount, housingRec housingList[], boo
  
   //If itemToDel was Found, delete it
   if (placeFound < listingCount) {                
-     cout << "place found is " << placeFound << endl;
-	 cout << "listingcount is " << listingCount << endl;
+     //cout << "place found is " << placeFound << endl;
+	 //cout << "listingcount is " << listingCount << endl;
      //copy the record in the last occuppied index location within the array over the record
 	 
      //housingList[placeFound] = housingList[listingCount - 1];	 	 
-	 cout << "MLS of placefound is now " << housingList[placeFound].mlsNum << endl;
+	 //cout << "MLS of placefound is now " << housingList[placeFound].mlsNum << endl;
      for (int num = placeFound + 1; num < listingCount; num++)
      housingList[num - 1] = housingList[num];     // Decrement list size
      listingCount--;
@@ -459,7 +460,7 @@ void deleteItem (int itemToDel, int& listingCount, housingRec housingList[], boo
 
      deleted = true;       
   }  // end if
-  cout << "listingcount out of loop is " << listingCount << endl;  
+  //cout << "listingcount out of loop is " << listingCount << endl;  
   return;
 } //end of deleteItem
 
@@ -526,10 +527,10 @@ int MLSinput ()
 		cout << "Enter MLS Number: (6 digit number): ";
 		cin >> mlsIn;
 
-		if ( (mlsIn < 0) || (mlsIn > MAX_MAX) ) 
+		if ( (mlsIn < 100000) || (mlsIn > MAX_MAX) ) 
 			cout << "Invalid input.  Must be a six digit number." << endl;		
 
-	} while ( (mlsIn < 0) || (mlsIn > MAX_MAX) );
+	} while ( (mlsIn < 100000) || (mlsIn > MAX_MAX) );
 	
 	return 	mlsIn;
 } // end of mlsinput
@@ -595,7 +596,7 @@ string zipInput ()
 		cout << "Enter the ZIP code (5digits-4digit): ";
 		cin >>  zip;	
 		
-		cout << "zip length is " << zip.length() << endl;
+		//cout << "zip length is " << zip.length() << endl;
 		if (zip.length() > ZIP_MAX_LENGTH)
 			boolZipLength = ERROR_1; //over length
         else
@@ -613,7 +614,7 @@ string zipInput ()
 			if (boolZipLength == 0 && boolNum == 0){ 
 				// Check for dash				
 				location = zip.find("-"); //
-				cout << "location is " << location << endl;
+				//cout << "location is " << location << endl;
 				if (location != 5)
 					boolNum = ERROR_2;
 			} // end of find dash
@@ -710,8 +711,7 @@ int boolRealtorLength,
 				if ( !isalpha(realtor[cell]) )
 				boolAlpha = ERROR_1;    //true         
 			} // end else          									
-        
-		//display error
+		} //display error
 		if (boolRealtorLength == ERROR_1)
 		{
 			cout << "Realtor Name is too long. " << endl;
