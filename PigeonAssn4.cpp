@@ -25,15 +25,19 @@ FUNCTIONS:	 main - Opens file, sends output, and closes file
 using namespace std;
 
 //global constants
-const string DESCRIPTION = "This program does x, y, and z.",
+const string DESCRIPTION = "This program keeps track of homes for sale in the area.",
              DEVELOPER = "Frank Pigeon",
              CLASSNUM = "CS362",
              ASSIGNMENT = "Week 4";
-//const int NOT_FOUND = -1;  // non-index value indicates 
-                           // value not found in list
 const string LISTINGS_FILENAME = "LISTINGS.TXT";  //input file 
 enum status {AVAILABLE, CONTRACT, SOLD}; // listing status options
-const int MAX_LISTINGS = 750; // maximum number of patients
+const int MAX_LISTINGS = 750, // maximum number of patients
+          ZIP_MAX_LENGTH = 10, // 10 chars in the zip code ie 12345-7890
+	      MID_POINT = 5;
+const int ERROR_1 = 1;
+const int ERROR_2 = 2;
+const int ERROR_3 = 3;
+
 // Defines structure to hold housing listing information
 struct  housingRec { //define structure
     int mlsNum; //MLS number
@@ -56,6 +60,10 @@ void addListings (housingRec housingList[], int& count);
 void displayMLS (housingRec housingList[], int count);
 void deleteItem (int itemToDel, int& listingCount, housingRec housingList[], bool& deleted);
 void writeListings(housingRec housingList[], int count);
+int MLSinput ();
+double priceInput ();
+int statusInput () ;
+string zipInput ();
 
 /******************************************************************************
 //  FUNCTION:	  main
@@ -108,11 +116,13 @@ void readListings(housingRec housingList[], int& num)
 //local variables
   char errorChoice; // user input if error opening file
   ifstream inData;         // input file stream
+  ofstream outData;         // output file stream
   int temp;  // temp file to work with enum stype status
   num = 0;   // number of listings read from file
 
   inData.open (LISTINGS_FILENAME.c_str() );
-  
+  outData.open (LISTINGS_FILENAME.c_str() );
+
   // if file doesn't open present error and ask user if they
   // wish to exit or start with no data    
   if (!inData) { 
@@ -122,17 +132,23 @@ void readListings(housingRec housingList[], int& num)
       cin >> errorChoice;
       errorChoice = toupper (errorChoice);
     } while ( (errorChoice == 'Q') && (errorChoice == 'C') );
+	if (errorChoice == 'Q')
+		return;
+	else
+		outData.open (LISTINGS_FILENAME.c_str() );		
   } // end if no file 
       
 
   else {  // file opened successfully     
-     inData >> housingList[num].mlsNum;// priming read
+    inData >> housingList[num].mlsNum;// priming read
 
-     if (num == MAX_LISTINGS) //array bounds
-         cout << "Error - too many records in the file" << endl;
-     else {// continue on 
+	if (num > MAX_LISTINGS) { //array bounds 
+			 cout << "Error - too many records in the file" << endl;
+			 cout << "All excess daya will be ignored." << endl << endl;
+	}  //end too many listings
+    else {// continue on 
         
-        while (inData) {
+        while (inData && num <= MAX_LISTINGS) {
             // read rest of data about listing            
             inData >> housingList[num].price >> temp; // place status into temp value                                               
                    housingList[num].currentStatus = static_cast <status> (temp);                     
@@ -143,10 +159,11 @@ void readListings(housingRec housingList[], int& num)
             inData >> housingList[num].mlsNum;   // try to read next listing  
         }  // end while
 		 
-     } // end of else continue on array in bounds
+    } // end of else continue on array in bounds
   } // end of else
       
-  inData.close();   
+  inData.close();
+  outData.close(); 
 } // end of readListings
 
 // **************************************************************************
@@ -213,7 +230,7 @@ char  menuChoice;
 	cout << "R - Remove a Listings" << endl;
 	cout << "E - Exit the Program" << endl;
 	cout << "---------------------------------------" << endl << endl;
-	cout << "Please choose an option from the menu: ";
+	cout << "Choose an option from the menu: ";
 	cin >> menuChoice;
 	menuChoice = toupper (menuChoice); //uppercase user input
 return menuChoice;
@@ -337,26 +354,22 @@ char loadExisting,
 void addListings (housingRec housingList[], int& count)
 {  		
 	char newListing;
-	int mls;
+	int mls = 0;
 	double price;
 	int temp;	
 	string zip, realtor;
 	
-	while ( (count >= MAX_LISTINGS) || ( newListing != 'N' ) ) {            		
-		cout << "Enter MLS Number:   ";
-		cin >> mls;
+	while ( (count <= MAX_LISTINGS) || ( newListing != 'N' ) ) {            		
+		mls = MLSinput ();
 		housingList[count].mlsNum = mls;		
 
-		cout << "Enter asking price: ";
-		cin >> price;
+		price = priceInput ();
 		housingList[count].price = price;		
 
-		cout << "Enter the status (0-Available, 1-Contract, or 2-Sold): ";
-		cin >>  temp;
+		temp = statusInput ();
 		housingList[count].currentStatus = static_cast <status> (temp);				
 
-		cout << "Enter the ZIP code (5digits-4digit): ";
-		cin >>  zip;
+		zip = zipInput ();
 		housingList[count].zip = zip;
 		cin.ignore();	
 		
@@ -467,3 +480,170 @@ void writeListings(housingRec housingList[], int count)
   outData.close();
   return;
 } // end of writeListings
+
+// **************************************************************************
+// FUNCTION:     MLSinput 
+// DESCRIPTION:  Displays data for all listings, one per line
+// INPUT:        Parameter:  patientList - data for all patients
+//                           num - count of patients stored in patientList
+// **************************************************************************
+int MLSinput ()
+{
+	int mlsIn;
+	do
+	{
+		cout << "Enter MLS Number:   ";
+		cin >> mlsIn;
+
+		if ( (mlsIn < 0) || (mlsIn > 999999) ) 
+			cout << "Invalid input.  Must be a six digit number." << endl;		
+
+	} while ( (mlsIn < 0) || (mlsIn > 999999) );
+	
+	return 	mlsIn;
+} // end of mlsinput
+
+// **************************************************************************
+// FUNCTION:     priceInput 
+// DESCRIPTION:  Displays data for all listings, one per line
+// INPUT:        Parameter:  patientList - data for all patients
+//                           num - count of patients stored in patientList
+// **************************************************************************
+double priceInput () 
+{
+	double priceIn;
+	do {
+		cout << "Enter asking price: ";
+		cin >> priceIn;
+		
+		if ( (priceIn < 1) || (priceIn > 999999) ) 
+			cout << "Invalid input.  Must be a positive amount." << endl;		
+
+	} while ( (priceIn < 1) || (priceIn > 999999) );
+	
+		return 	priceIn;
+} // end of priceInput
+
+// **************************************************************************
+// FUNCTION:     statusInput 
+// DESCRIPTION:  Displays data for all listings, one per line
+// INPUT:        Parameter:  patientList - data for all patients
+//                           num - count of patients stored in patientList
+// **************************************************************************
+int statusInput () 
+{
+	int temp;
+	do {
+		cout << "Enter the status (0-Available, 1-Contract, or 2-Sold): ";
+		cin >>  temp;
+		
+		if ( (temp < 0) || (temp > 2) ) 
+			cout << "Invalid input.  Must be 0, 1, or 2." << endl;		
+
+	} while ( (temp < 0) || (temp > 2) );
+	
+	return 	temp;
+} // end of statusInput
+
+// **************************************************************************
+// FUNCTION:     zipInput 
+// DESCRIPTION:  Displays data for all listings, one per line
+// INPUT:        Parameter:  patientList - data for all patients
+//                           num - count of patients stored in patientList
+// **************************************************************************
+string zipInput () 
+{
+	int boolNum,
+		boolZipLength;
+	string  zip;
+	int location,
+		cell;
+	do {
+		boolNum = 0;
+		boolZipLength = 0;
+		cout << "Enter the ZIP code (5digits-4digit): ";
+		cin >>  zip;	
+		
+		cout << "zip length is " << zip.length() << endl;
+		if (zip.length() > ZIP_MAX_LENGTH)
+			boolZipLength = ERROR_1; //over length
+        else
+			if (zip.length() < ZIP_MAX_LENGTH)
+				boolZipLength = ERROR_2;  //under length
+               
+        if (boolZipLength == 0) {
+			//check first five numbers of zip code
+			for (cell = 0; cell < MID_POINT; cell++)
+			{				   
+				if ( !isdigit(zip[cell]) )
+				boolNum = ERROR_1;    //true         
+			} // end else
+            
+			if (boolZipLength == 0 && boolNum == 0){ 
+				// Check for dash				
+				location = zip.find("-"); //
+				cout << "location is " << location << endl;
+				if (location != 5)
+					boolNum = ERROR_2;
+			} // end of find dash
+
+			if (boolZipLength == 0 && boolNum == 0){
+			// check last 4 numbers
+				for (cell = (MID_POINT+2); cell < ZIP_MAX_LENGTH; cell++){						   
+				if ( !isdigit(zip[cell]) )
+				boolNum = ERROR_3;    //true         
+				} // end of for
+			} // end of check last 4 numbers
+
+		}  //end of check numbers and dash
+
+
+			
+         // Display Error messages (if applicable)      	 
+
+		//display error
+		if (boolZipLength == ERROR_1)
+		{
+			cout << "Zip code "<< zip << " is too long. " << endl;
+			cout << "Must be 5 numbers then a dash (-) followed by 4 numbers.  Try again." << endl
+				 << "i.e. 12345-7890" 
+				 << endl << endl;
+		}  //too long
+		else
+			if (boolZipLength == ERROR_2)
+			{
+				cout << "Zip code "<< zip << " is too short. " << endl;
+				cout << "Must be 5 numbers then a dash (-) followed by 4 numbers.  Try again." << endl
+				<< "i.e. 12345-7890"
+				<< endl << endl;
+			}  //too short
+		else
+			if (boolNum == ERROR_1)
+			{
+			   cout << "First 5 must be numbers." << endl;
+			   cout << "Must be 5 numbers then a dash (-) followed by 4 numbers.  Try again." << endl
+			   << "i.e. 12345-7890"
+			   << endl << endl;
+			}
+		else
+			if (boolNum == ERROR_2)
+			{
+			   cout << "There must be a dash seperating the numbers." << endl;
+			   cout << "Must be 5 numbers then a dash (-) followed by 4 numbers.  Try again." << endl
+			   << "i.e. 12345-7890"
+			   << endl << endl;
+			}
+		else
+			if (boolNum == ERROR_3)
+			{
+			   cout << "Last 4 must be numbers." << endl;
+			   cout << "Must be 5 numbers then a dash (-) followed by 4 numbers.  Try again." << endl
+			   << "i.e. 12345-7890"
+			   << endl << endl;
+			}
+	} while ( boolZipLength > 0 || boolNum > 0 );
+	
+	return 	zip;
+} // end of zipInput
+
+	
