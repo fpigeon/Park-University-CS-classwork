@@ -6,7 +6,7 @@ Program helps keep track of the realtor's association homes for sale.
 Processing: Uses array of records to store housing listings.
 Output: Outputs the records in the file to screen and at the end asks
 user if they want to commit changes to LISTINGS.txt
-FUNCTIONS:   main - calls other functions and initializes array of records
+FUNCTIONS:	 main - calls other functions and initializes array of records
 			 showDescription - displays program description to screen
 			 readListings - reads input file and stores them in the array of records
              loadExistingData - prompts user if they want to load existing data from
@@ -72,6 +72,7 @@ void showDescription (string DESCRIPTION);
 //string zipInput ();
 //string realtorInput ();
 void printArray (int array[][LEVELS]);
+void fullGarage (int array[][LEVELS]);
 /******************************************************************************
 //  FUNCTION:	  main
 //  DESCRIPTION:  Calls other functions and intializes array of records
@@ -82,12 +83,13 @@ int main()
 {
     //local variables
 	car_type carList; // enumerated type carList 
-	int garage [CAR_TYPES] [LEVELS] = {0}; // create a two-dimensional array for the garage
+	int garage [CAR_TYPES] [LEVELS]; // create a two-dimensional array for the garage
     int listingCount;
 	char menuChoice;
 	bool quit = false;
 
     showDescription (DESCRIPTION);  // oupt program desciption to screen
+	fullGarage (garage);
 	printArray (garage);
 	/*loadExistingData (housingList, listingCount);    
 	do {
@@ -741,5 +743,23 @@ void printArray (int array[][LEVELS])
   }    // end outer for
 
   cout << endl << endl;
+  return;
+}
+
+//********************************************************************* 
+// Function:         fullGarage 
+// Description:      Fills garage with the maximum cars 5 per level
+// INPUT:  
+//       Parameter:  array - matrix to initialize values
+//********************************************************************* 
+void fullGarage (int array[][LEVELS])		
+{
+  for (int car_type = 0; car_type < CAR_TYPES; car_type++) {
+      
+      for (int level = 0; level < LEVELS; level++)
+          array[car_type][level] = MAX_CARS;        
+      
+  }    // end outer for
+
   return;
 }
