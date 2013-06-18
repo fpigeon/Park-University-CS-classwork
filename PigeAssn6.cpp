@@ -56,25 +56,12 @@ const int ERROR_3 = 3; // unique error message
           
 //prototypes
 void showDescription (string DESCRIPTION);
-//void readListings(housingRec housingList[], int& num);
-//void loadExistingData (housingRec housingList[], int& listingCount);
-//void displayListings (housingRec housingList[], int count);
-//string convertStatusToString (status currentStatus);
-//char checkMenuChoice (char& menuChoice);
-//char displayMenu ();
-//void menuAction (char menuChoice, housingRec housingList[], int& listingCount, bool& quit);
-//void addListings (housingRec housingList[], int& count);
-//void displayMLS (housingRec housingList[], int count);
-//void deleteItem (int itemToDel, int& listingCount, housingRec housingList[], bool& deleted);
-//void writeListings(housingRec housingList[], int count);
-//int MLSinput ();
-//double priceInput ();
-//int statusInput () ;
-//string zipInput ();
-//string realtorInput ();
 void printArray (int array[][LEVELS]);
 void fullGarage (int array[][LEVELS]);
 void emptyGarage (int array[][LEVELS]);
+char displayMenu ();
+char checkMenuChoice (char& menuChoice);
+void menuAction (char menuChoice, bool& quit);
 /******************************************************************************
 //  FUNCTION:	  main
 //  DESCRIPTION:  Calls other functions and intializes array of records
@@ -89,8 +76,8 @@ int main()
     int row, //temporary integer variable to hold input
 		col,
 		cars;
-	//char menuChoice;
-	//bool quit = false;
+	char menuChoice;
+	bool quit = false;
 	fstream binFile;              // in&output file stream (binary file)
 	binFile.open (GARBAGE_FILENAME.c_str(), ios::binary | ios::in );
 	if (!binFile)			
@@ -111,12 +98,11 @@ int main()
 
     showDescription (DESCRIPTION);  // oupt program desciption to screen	
 	printArray (garage);//display array output to screen 
-	/*loadExistingData (housingList, listingCount);    
 	do {
 		menuChoice = displayMenu ();
 		checkMenuChoice (menuChoice);	 	
-		menuAction (menuChoice, housingList, listingCount, quit);
-	} while (quit == false);*/
+		menuAction (menuChoice, quit);
+	} while (quit == false);	
 	system ("PAUSE");
     return 0;
 }  // end main
@@ -154,18 +140,19 @@ void printArray (int array[][LEVELS])
   //Output header
   cout << "Level:   " << setw(6) << "0" << setw(6) << "1" << setw(6) << "2" <<
 	  setw(6) << "3" << setw(6) << "4" << setw(6) << "5" << 
-	  setw(10) << "Total" << endl << endl;
+	  setw(9) << "Total" << endl << endl;
   
+  // display array data per line & track line total &total total
   for (int car_type = 0; car_type < CAR_TYPES; car_type++) {	  
       cout << CAR_STRINGS[car_type];
 	  lineCount = 0; //clear line counter
       for (int level = 0; level < LEVELS; level++){
         cout << setw(6) << array[car_type][level];
-		lineCount += array[car_type][level];
+		lineCount += array[car_type][level]; // track car total for line
 	  } //end inner loop
+	  	  
 	  cout << setw(6) << lineCount << endl;
-	  totalCount += lineCount;
-
+	  totalCount += lineCount; // total values for all avaiavle cars
 	  
   }    // end outer for
   //Display Totals for Loop
@@ -210,3 +197,80 @@ void emptyGarage (int array[][LEVELS])
 
   return;
 }  //end of emptyGarage
+
+// **************************************************************************
+// FUNCTION:     displayMenu 
+// DESCRIPTION:  Displays the menu choices
+// OUTPUT:       menuChoice - user input from the menu choices
+// **************************************************************************
+char displayMenu ()
+{
+//local variables
+char  menuChoice;
+
+	cout << "---------------------------------------" << endl;
+	cout << "RENTAL CAR ACTION MENU" << endl;
+	cout << "R - Rent a Car" << endl;
+	cout << "T - Turn in a car" << endl;	
+	cout << "E - Exit the Program" << endl;
+	cout << "---------------------------------------" << endl << endl;
+	cout << "Choose an option from the menu: ";
+	cin >> menuChoice;
+	menuChoice = toupper (menuChoice); //uppercase user input
+return menuChoice;
+} // end of actionMenu
+
+// **************************************************************************
+// FUNCTION:     checkMenuChoice 
+// DESCRIPTION:  Validates user input menu choice re-prompting until correct
+// INPUT:        Parameter:  menuChoice -user input from menu choices
+// OUTPUT:       Parameter:  menuChoice  - validated menu choice
+// **************************************************************************
+char checkMenuChoice (char& menuChoice)
+{	
+ //loop until valid input 	
+	while( (menuChoice != 'R') && (menuChoice != 'T')
+		&& (menuChoice != 'E') ) {
+		if ( (menuChoice != 'R') && (menuChoice != 'T') && (menuChoice != 'E') )				
+			cout << "Invalid Input- Please select R, T, or E" << endl;
+			menuChoice = displayMenu();
+	}    // end while 
+
+return menuChoice;
+} // end of checkMenuChoice
+
+/*************************************************************************
+  FUNCTION:	    menuAction
+  DESCRIPTION:  calls functions based on user selected menu choice
+  INPUT:		Parameters:	menuChoice -user input from menu choices
+							housingList - array of records that stores listings
+							listingCount - count of listings in the array of records
+							quit - used to flag the end of the program
+  OUTPUT: 	    Parameters:	listingCount - count of listings in the array of records
+							quit - used to flag the end of the program
+*************************************************************************/
+void menuAction (char menuChoice, bool& quit)
+{
+// int mlsDelete; //user input to delete an MLS Listing
+// bool deleted; // index to delete
+ char commitChange; // user input to commit changes
+
+	switch (menuChoice) {
+		case 'R':  //Rental Car	
+			cout << "You chose R" << endl;
+			break;
+		case 'T':  //Add a Listing		
+			cout << "You chose T" << endl;
+			break;	
+		case 'E': // Exit		
+			cout << "You chose E" << endl;
+			cout << "Do you want to commit changes to file (Y/N)?: ";
+			cin >> commitChange;
+			commitChange = toupper (commitChange);
+			//if (commitChange == 'Y')
+			//	writeListings(housingList, listingCount);
+			quit = true;
+			break;
+	} //end switch
+
+} // end of menuAction
