@@ -1,7 +1,7 @@
 /* ----------------------------------------------------------------------------
 Author: Frank Pigeon
 Class: CS362
-Assignment: Week 6
+Assignment: Week 5
 Program helps keep track of the realtor's association homes for sale.
 Processing: Uses array of records to store housing listings.
 Output: Outputs the records in the file to screen and at the end asks
@@ -42,7 +42,7 @@ using namespace std;
 const string DESCRIPTION = "This program keeps track of rental cars.",
              DEVELOPER = "Frank Pigeon",
              CLASSNUM = "CS362",
-             ASSIGNMENT = "Week 6";
+             ASSIGNMENT = "Week 5";
 const string GARBAGE_FILENAME = "GARBAGE.BIN";  //binary file 
 enum car_type {COMPACT, MIDSIZE, FULLSIZE, SUV, NONE}; // listing car type options
 const int MAX_CARS = 5; // maximum cars on a level
@@ -86,42 +86,28 @@ int main()
     //local variables
 	car_type carList; // enumerated type carList 
 	int garage [CAR_TYPES] [LEVELS]; // create a two-dimensional array for the garage
-    int temp_level, //temporary integer variable to hold input
-		temp_row,
-		temp_car;
+    int row, //temporary integer variable to hold input
+		col,
+		cars;
 	//char menuChoice;
 	//bool quit = false;
 	fstream binFile;              // in&output file stream (binary file)
-	binFile.open (GARBAGE_FILENAME, ios::binary | ios::in | ios::out| ios::app);
-	if (!binFile){
-			cout << "Error opening data file" << endl;
-			cout << "Creating bin file" << endl;
-			binFile.open (GARBAGE_FILENAME, ios::binary | ios::in | ios::out| ios::trunc);
-			fullGarage (garage);//fill array with max values (initialize)
-			system ("PAUSE");
-	} //end of if
+	binFile.open (GARBAGE_FILENAME.c_str(), ios::binary | ios::in );
+	if (!binFile)			
+			fullGarage (garage);//fill array with max values (initialize)				
 	else {
-	emptyGarage (garage);//fill array with zero values (initialize)
-	// priming read for first data item
-	binFile.read( reinterpret_cast<char*> (&temp_level), sizeof(int) );
-	while (binFile){ //number successfully read
-		for (int carsCount = 0; carsCount < CAR_TYPES; carsCount++) {      
-			for (int levelCount = 0; levelCount < LEVELS; levelCount++){
-				//array[car_type][level] = MAX_CARS;
-				binFile.read( reinterpret_cast<char*> (&temp_level), sizeof(int) );
-				binFile.read( reinterpret_cast<char*> (&temp_row), sizeof(int) );
-				binFile.read( reinterpret_cast<char*> (&temp_car), sizeof(int) );
-				garage[temp_level][temp_row] = temp_car;
-			} //end inner for
-		}    // end outer for
-	} // end of while	
+		emptyGarage (garage);//fill array with zero values (initialize)
+	    // priming read for first data item
+		binFile.read( reinterpret_cast<char*> (&row), sizeof(int) );
+		while (binFile){ //number successfully read				
+			binFile.read( reinterpret_cast<char*> (&col), sizeof(int) );
+			binFile.read( reinterpret_cast<char*> (&cars), sizeof(int) );			
+			garage[row][col] = cars;
+			binFile.read( reinterpret_cast<char*> (&row), sizeof(int) );
+		} // end of while	
 	binFile.close();
-	cout << "All file data has been read." << endl;
-     
-		 
-    
-
-}  //end of else
+	cout << "All file data has been read." << endl;     		    
+	}  //end of else
 
     showDescription (DESCRIPTION);  // oupt program desciption to screen	
 	printArray (garage);//display array output to screen 
@@ -182,6 +168,9 @@ void printArray (int array[][LEVELS])
 
 	  
   }    // end outer for
+  //Display Totals for Loop
+  cout << setw(51) << "-----"<< endl;
+  cout << "Total Cars Available for Rental" << setw(20) << totalCount << endl;
 
   cout << endl << endl;
   return;
