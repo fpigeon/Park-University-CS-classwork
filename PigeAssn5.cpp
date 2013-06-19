@@ -62,6 +62,9 @@ void emptyGarage (int array[][LEVELS]);
 char displayMenu ();
 char checkMenuChoice (char& menuChoice);
 void menuAction (char menuChoice, bool& quit);
+void openBinFile (int garage[][LEVELS]);
+char subMenu ();
+char checkSubChoice (char& menuChoice);
 /******************************************************************************
 //  FUNCTION:	  main
 //  DESCRIPTION:  Calls other functions and intializes array of records
@@ -72,31 +75,12 @@ int main()
 {
     //local variables
 	car_type carList; // enumerated type carList 
-	int garage [CAR_TYPES] [LEVELS]; // create a two-dimensional array for the garage
-    int row, //temporary integer variable to hold input
-		col,
-		cars;
+	int garage [CAR_TYPES] [LEVELS]; // create a two-dimensional array for the garage    
 	char menuChoice;
 	bool quit = false;
-	fstream binFile;              // in&output file stream (binary file)
-	binFile.open (GARBAGE_FILENAME.c_str(), ios::binary | ios::in );
-	if (!binFile)			
-			fullGarage (garage);//fill array with max values (initialize)				
-	else {
-		emptyGarage (garage);//fill array with zero values (initialize)
-	    // priming read for first data item
-		binFile.read( reinterpret_cast<char*> (&row), sizeof(int) );
-		while (binFile){ //number successfully read				
-			binFile.read( reinterpret_cast<char*> (&col), sizeof(int) );
-			binFile.read( reinterpret_cast<char*> (&cars), sizeof(int) );			
-			garage[row][col] = cars;
-			binFile.read( reinterpret_cast<char*> (&row), sizeof(int) );
-		} // end of while	
-	binFile.close();
-	cout << "All file data has been read." << endl;     		    
-	}  //end of else
-
-    showDescription (DESCRIPTION);  // oupt program desciption to screen	
+	
+	showDescription (DESCRIPTION);  // oupt program desciption to screen	
+	openBinFile (garage);    
 	printArray (garage);//display array output to screen 
 	do {
 		menuChoice = displayMenu ();
@@ -231,9 +215,34 @@ char checkMenuChoice (char& menuChoice)
  //loop until valid input 	
 	while( (menuChoice != 'R') && (menuChoice != 'T')
 		&& (menuChoice != 'E') ) {
-		if ( (menuChoice != 'R') && (menuChoice != 'T') && (menuChoice != 'E') )				
+		if ( (menuChoice != 'R') && (menuChoice != 'T') && (menuChoice != 'E') ){				
 			cout << "Invalid Input- Please select R, T, or E" << endl;
 			menuChoice = displayMenu();
+		} // end if
+	}    // end while 
+
+return menuChoice;
+} // end of checkMenuChoice
+
+// **************************************************************************
+// FUNCTION:     checkSubChoice 
+// DESCRIPTION:  Validates user input menu choice re-prompting until correct
+// INPUT:        Parameter:  menuChoice -user input from menu choices
+// OUTPUT:       Parameter:  menuChoice  - validated menu choice
+// **************************************************************************
+char checkSubChoice (char& menuChoice)
+{	
+ //loop until valid input 	
+	while( (menuChoice != 'C') && (menuChoice != 'M')
+		&& (menuChoice != 'F') && (menuChoice != 'S')
+		&& (menuChoice != 'R') ) {
+
+			if ( (menuChoice != 'C') && (menuChoice != 'M')
+			&& (menuChoice != 'F') && (menuChoice != 'S')
+			&& (menuChoice != 'R') ) {
+				cout << "Invalid Input- Please select C, M, F, S, or R: " << endl;
+				menuChoice = subMenu();
+			} //end if
 	}    // end while 
 
 return menuChoice;
@@ -253,14 +262,20 @@ void menuAction (char menuChoice, bool& quit)
 {
 // int mlsDelete; //user input to delete an MLS Listing
 // bool deleted; // index to delete
- char commitChange; // user input to commit changes
-
+ char commitChange, // user input to commit changes
+	  subChoice;
 	switch (menuChoice) {
 		case 'R':  //Rental Car	
 			cout << "You chose R" << endl;
+			subChoice = subMenu();
+			checkSubChoice (subChoice);
+			cout << "You chose " << subChoice << endl;
 			break;
 		case 'T':  //Add a Listing		
 			cout << "You chose T" << endl;
+			subChoice = subMenu();
+			checkSubChoice (subChoice);
+			cout << "You chose " << subChoice << endl;
 			break;	
 		case 'E': // Exit		
 			cout << "You chose E" << endl;
@@ -274,3 +289,60 @@ void menuAction (char menuChoice, bool& quit)
 	} //end switch
 
 } // end of menuAction
+
+// **************************************************************************
+// FUNCTION:     subMenu 
+// DESCRIPTION:  Displays the menu choices
+// OUTPUT:       menuChoice - user input from the menu choices
+// **************************************************************************
+char subMenu ()
+{
+//local variables
+char  menuChoice;
+
+	cout << "---------------------------------------" << endl;
+	cout << "RENTAL CAR CAR TYPES" << endl;
+	cout << "C - Compact" << endl;
+	cout << "M - Mid-size" << endl;	
+	cout << "F - Full-size" << endl;
+	cout << "S - SUV" << endl;
+	cout << "R - Return to Main Menu" << endl;
+	cout << "---------------------------------------" << endl << endl;
+	cout << "Choose an option from the menu: ";
+	cin >> menuChoice;
+	menuChoice = toupper (menuChoice); //uppercase user input
+return menuChoice;
+} // end of actionMenu
+
+// **************************************************************************
+// FUNCTION:     openBinFile 
+// DESCRIPTION:  Opens Binary File
+// OUTPUT:       None
+// **************************************************************************
+void openBinFile (int garage[][LEVELS])
+{	
+	int row, //temporary integer variable to hold input
+		col,
+		cars;
+	fstream binFile;  // in&output file stream (binary file)
+	
+	binFile.open (GARBAGE_FILENAME.c_str(), ios::binary | ios::in );
+
+	if (!binFile)			
+		fullGarage (garage); //fill array with max values (initialize)				
+	else {
+		emptyGarage (garage); //fill array with zero values (initialize)
+	    // priming read for first data item
+		binFile.read( reinterpret_cast<char*> (&row), sizeof(int) );
+		while (binFile){ //number successfully read				
+			binFile.read( reinterpret_cast<char*> (&col), sizeof(int) );
+			binFile.read( reinterpret_cast<char*> (&cars), sizeof(int) );			
+			garage[row][col] = cars;
+			binFile.read( reinterpret_cast<char*> (&row), sizeof(int) );
+		} // end of while		
+	    cout << "All file data has been read." << endl << endl;
+	}  //end of else
+	
+	binFile.close();
+	 		    
+} //end of openBinFile
