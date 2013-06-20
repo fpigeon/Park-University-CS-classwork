@@ -44,7 +44,7 @@ const string DESCRIPTION = "This program keeps track of rental cars.",
              CLASSNUM = "CS362",
              ASSIGNMENT = "Week 5";
 const string GARBAGE_FILENAME = "GARBAGE.BIN";  //binary file 
-enum car_type {COMPACT, MIDSIZE, FULLSIZE, SUV, NONE}; // listing car type options
+enum carType {COMPACT, MIDSIZE, FULLSIZE, SUV, NONE}; // listing car type options
 const int MAX_CARS = 5; // maximum cars on a level
 const int CAR_TYPES = 4; //types of cars
 const int LEVELS = 6; //number of levels in the garage
@@ -52,7 +52,7 @@ const int EMPTY_CARS = 0;
 const int ERROR_1 = 1; // unique error message
 const int ERROR_2 = 2; // unique error message
 const int ERROR_3 = 3; // unique error message
-
+const int ALL_LVL_FULL = 30; // level is filled with cars
           
 //prototypes
 void showDescription (string DESCRIPTION);
@@ -61,10 +61,15 @@ void fullGarage (int array[][LEVELS]);
 void emptyGarage (int array[][LEVELS]);
 char displayMenu ();
 char checkMenuChoice (char& menuChoice);
-void menuAction (char menuChoice, bool& quit);
 void openBinFile (int garage[][LEVELS]);
 char subMenu ();
-char checkSubChoice (char& menuChoice);
+int checkSubChoice (char& menuChoice);
+void menuAction (char menuChoice, int array[][LEVELS], bool& quit);
+string convertCarToString (int carList);
+void displayCars (int car_type, int array[][LEVELS], int& lineCount);
+int parkWhere ();
+int checkPark (int car_type, int& menuChoice, int array[][LEVELS]);
+
 /******************************************************************************
 //  FUNCTION:	  main
 //  DESCRIPTION:  Calls other functions and intializes array of records
@@ -73,23 +78,77 @@ char checkSubChoice (char& menuChoice);
 ******************************************************************************/
 int main()
 {
-    //local variables
-	car_type carList; // enumerated type carList 
+    //local variables	
 	int garage [CAR_TYPES] [LEVELS]; // create a two-dimensional array for the garage    
 	char menuChoice;
 	bool quit = false;
 	
 	showDescription (DESCRIPTION);  // oupt program desciption to screen	
-	openBinFile (garage);    
-	printArray (garage);//display array output to screen 
-	do {
-		menuChoice = displayMenu ();
-		checkMenuChoice (menuChoice);	 	
-		menuAction (menuChoice, quit);
-	} while (quit == false);	
-	system ("PAUSE");
+	openBinFile (garage);    //open binary file and read existing data
+	printArray (garage); //display array output to screen 
+	do { //loop until EXIT is selected
+		menuChoice = displayMenu ();  //prompt user for input from main menu
+		checkMenuChoice (menuChoice); //error check user input
+		menuAction (menuChoice, garage, quit); // take action based on user choice
+	} while (quit == false); 	
     return 0;
 }  // end main
+
+/*************************************************************************
+  FUNCTION:	    menuAction
+  DESCRIPTION:  calls functions based on user selected menu choice
+  INPUT:		Parameters:	menuChoice -user input from menu choices
+							housingList - array of records that stores listings
+							listingCount - count of listings in the array of records
+							quit - used to flag the end of the program
+  OUTPUT: 	    Parameters:	listingCount - count of listings in the array of records
+							quit - used to flag the end of the program
+*************************************************************************/
+void menuAction (char menuChoice, int array[][LEVELS], bool& quit)
+{
+// int mlsDelete; //user input to delete an MLS Listing
+// bool deleted; // index to delete
+ char commitChange, // user input to commit changes
+	  subChoice; // user input from sub menu
+ int carChoice = 4, //converted int from char
+	 levelTotal = 0, // total for car type
+     parkLevel; //what level the car will be parked at
+	switch (menuChoice) {
+		case 'R':  //Rental Car	
+			cout << "You chose R" << endl;
+			subChoice = subMenu();
+			carChoice = checkSubChoice (subChoice);
+			cout << "You chose " << subChoice << endl;
+			displayCars (carChoice, array, levelTotal);				
+			break;
+		case 'T':  //Turn in Car		
+			cout << "You chose T" << endl;
+			subChoice = subMenu();
+			carChoice = checkSubChoice (subChoice);
+			cout << "You chose " << subChoice << endl;
+			if (carChoice != 4){
+				displayCars (carChoice, array, levelTotal);				
+				if (levelTotal == ALL_LVL_FULL)
+					cout <<  "Error - Car is being returned to the wrong company" << endl;
+				else {				
+					parkLevel = parkWhere ();
+					checkPark(carChoice, parkLevel, array);
+				} //end else
+			} //end if
+			break;
+		case 'E': // Exit		
+			cout << "You chose E" << endl;
+			cout << "Do you want to commit changes to file (Y/N)?: ";
+			cin >> commitChange;
+			commitChange = toupper (commitChange);
+			//if (commitChange == 'Y')
+			//	writeListings(housingList, listingCount);
+			quit = true;
+			break;
+	} //end switch
+
+} // end of menuAction
+
 /*************************************************************************
   FUNCTION:	    showDescription
   DESCRIPTION:  displays program description to screen
@@ -144,6 +203,48 @@ void printArray (int array[][LEVELS])
   cout << "Total Cars Available for Rental" << setw(20) << totalCount << endl;
 
   cout << endl << endl;
+  return;
+}
+//********************************************************************* 
+// Function:         displayCars
+// Description:      Displays values in one matrix, neatly by row
+// INPUT:  
+//       Parameter:  array - matrix to dispaly
+//********************************************************************* 
+void displayCars (int car_type, int array[][LEVELS], int& lineCount)		
+{
+  string carString;
+  if (car_type != 4) {//only display if not none
+	  //carType carList; // enumerated type carList 
+	  lineCount = 0; //initialize var
+	  const string CAR_STRINGS[] = {"Compact  ", "Mid-Size ", "Full Size",
+					  "SUV      "};
+	  //const string CARS[] = {"Compact", "Mid-Size", "Full Size",
+	  //                "SUV"};
+	  //Output header  
+	  //cout << "Number of " << CARS [car_type]<< " Cars Parked on each Level" << endl;
+	  carString = convertCarToString (car_type);
+	  cout << "Number of " << carString << " Cars Parked on each Level" << endl;
+
+	  cout << "Level:   " << setw(6) << "0" << setw(6) << "1" << setw(6) << "2" <<
+		  setw(6) << "3" << setw(6) << "4" << setw(6) << "5" << 
+		  setw(9) << "Total" << endl << endl;
+  
+	  // display array data per line & track line total &total total
+	  //for (int car_type = 0; car_type < CAR_TYPES; car_type++) {
+	  //    lineCount = 0; //clear line counter
+		cout << CAR_STRINGS[car_type];
+		for (int level = 0; level < LEVELS; level++){
+		cout << setw(6) << array[car_type][level];
+		lineCount += array[car_type][level]; // track car total for line
+		} //end inner loop
+	  	  
+		cout << setw(6) << lineCount << endl;	   
+
+	  //spacing
+	  cout << endl << endl;
+  } // end of if
+  
   return;
 }
 
@@ -230,8 +331,9 @@ return menuChoice;
 // INPUT:        Parameter:  menuChoice -user input from menu choices
 // OUTPUT:       Parameter:  menuChoice  - validated menu choice
 // **************************************************************************
-char checkSubChoice (char& menuChoice)
-{	
+int checkSubChoice (char& menuChoice)
+{
+  int intMenuChoice; // converted char to int to work with enumerated type carType
  //loop until valid input 	
 	while( (menuChoice != 'C') && (menuChoice != 'M')
 		&& (menuChoice != 'F') && (menuChoice != 'S')
@@ -243,52 +345,30 @@ char checkSubChoice (char& menuChoice)
 				cout << "Invalid Input- Please select C, M, F, S, or R: " << endl;
 				menuChoice = subMenu();
 			} //end if
-	}    // end while 
+	}    // end while
 
-return menuChoice;
-} // end of checkMenuChoice
-
-/*************************************************************************
-  FUNCTION:	    menuAction
-  DESCRIPTION:  calls functions based on user selected menu choice
-  INPUT:		Parameters:	menuChoice -user input from menu choices
-							housingList - array of records that stores listings
-							listingCount - count of listings in the array of records
-							quit - used to flag the end of the program
-  OUTPUT: 	    Parameters:	listingCount - count of listings in the array of records
-							quit - used to flag the end of the program
-*************************************************************************/
-void menuAction (char menuChoice, bool& quit)
-{
-// int mlsDelete; //user input to delete an MLS Listing
-// bool deleted; // index to delete
- char commitChange, // user input to commit changes
-	  subChoice;
+	//convert to int for enumerated type
 	switch (menuChoice) {
-		case 'R':  //Rental Car	
-			cout << "You chose R" << endl;
-			subChoice = subMenu();
-			checkSubChoice (subChoice);
-			cout << "You chose " << subChoice << endl;
+		case 'C':  //Compact
+			intMenuChoice = 0;
 			break;
-		case 'T':  //Add a Listing		
-			cout << "You chose T" << endl;
-			subChoice = subMenu();
-			checkSubChoice (subChoice);
-			cout << "You chose " << subChoice << endl;
-			break;	
-		case 'E': // Exit		
-			cout << "You chose E" << endl;
-			cout << "Do you want to commit changes to file (Y/N)?: ";
-			cin >> commitChange;
-			commitChange = toupper (commitChange);
-			//if (commitChange == 'Y')
-			//	writeListings(housingList, listingCount);
-			quit = true;
+		case 'M':  //midsize
+			intMenuChoice = 1;
+			break;
+		case 'F':  //fullsize
+			intMenuChoice = 2;
+			break;
+		case 'S':  //SUV
+			intMenuChoice = 3;
+			break;
+		case 'R':  //None
+			intMenuChoice = 4;
 			break;
 	} //end switch
 
-} // end of menuAction
+return intMenuChoice;
+} // end of checkMenuChoice
+
 
 // **************************************************************************
 // FUNCTION:     subMenu 
@@ -346,3 +426,68 @@ void openBinFile (int garage[][LEVELS])
 	binFile.close();
 	 		    
 } //end of openBinFile
+
+// **************************************************************************
+// FUNCTION:     convertCarToString 
+// DESCRIPTION:  turn enum data into string for output purposes
+// INPUT:        Parameter:  currentStatus - enum data type for listing status
+// OUTPUT:       Parameter:  statusString  - converted enum type to string
+// **************************************************************************
+string convertCarToString (int carList)
+{
+	string carString;
+	switch (carList) {
+		case 0: carString = "Compact";
+			break;
+		case 1: carString = "Mid-size";
+			break;
+		case 2: carString = "Full size";
+			break;
+		case 3: carString = "SUV";
+			break;
+		case 4: carString = "None";
+			break;
+	} //end switch
+	return carString;
+} // end of convertCarToString
+
+// **************************************************************************
+// FUNCTION:     parkWhere 
+// DESCRIPTION:  Displays the menu choices
+// OUTPUT:       menuChoice - user input from the menu choices
+// **************************************************************************
+int parkWhere ()
+{
+//local variables
+int  menuChoice;
+
+	cout << endl;
+	cout << "Your car can be parked on any level with less than " << MAX_CARS << " cars." << endl;
+	cout << "Which level will the car be parked on? ";
+	cin >> menuChoice;
+	
+return menuChoice;
+} // end of actionMenu
+
+// **************************************************************************
+// FUNCTION:     checkPark 
+// DESCRIPTION:  Validates user input menu choice re-prompting until correct
+// INPUT:        Parameter:  menuChoice -user input from menu choices
+// OUTPUT:       Parameter:  menuChoice  - validated menu choice
+// **************************************************************************
+int checkPark (int car_type, int& menuChoice, int array[][LEVELS])
+{	
+ //loop until valid input 	
+	while( ( array [car_type] [menuChoice] > MAX_CARS) || (menuChoice < 0) || (menuChoice > MAX_CARS) ) {
+		cout << "array value is " << array [car_type] [menuChoice] << endl;
+		if ( (menuChoice < 0) || (menuChoice > MAX_CARS) )
+			cout << menuChoice << " is out of bounds" << endl;
+		
+		else if (array [car_type] [menuChoice] > MAX_CARS) 				
+			cout << "Error - Level " << menuChoice << " already contains " << MAX_CARS <<  endl;
+		
+		menuChoice = parkWhere(); //re promt for user input		
+	}    // end while
+	cout << "valid input" << endl;
+return menuChoice;
+} // end of checkMenuChoice
