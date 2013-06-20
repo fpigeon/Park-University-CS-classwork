@@ -56,7 +56,6 @@ const int ALL_LVL_FULL = 30; // level is filled with cars
           
 //prototypes
 void showDescription (string DESCRIPTION);
-void printArray (int array[][LEVELS]);
 void fullGarage (int array[][LEVELS]);
 void emptyGarage (int array[][LEVELS]);
 char displayMenu ();
@@ -66,9 +65,10 @@ char subMenu ();
 int checkSubChoice (char& menuChoice);
 void menuAction (char menuChoice, int array[][LEVELS], bool& quit);
 string convertCarToString (int carList);
-void displayCars (int car_type, int array[][LEVELS], int& lineCount);
 int parkWhere ();
 int checkPark (int car_type, int& menuChoice, int array[][LEVELS]);
+void printArray (int array[][LEVELS]);
+void displayCars (int car_type, int array[][LEVELS], int& lineCount, string& carString);
 
 /******************************************************************************
 //  FUNCTION:	  main
@@ -113,13 +113,15 @@ void menuAction (char menuChoice, int array[][LEVELS], bool& quit)
  int carChoice = 4, //converted int from char
 	 levelTotal = 0, // total for car type
      parkLevel; //what level the car will be parked at
+ string carString;
+ 
 	switch (menuChoice) {
 		case 'R':  //Rental Car	
 			cout << "You chose R" << endl;
 			subChoice = subMenu();
 			carChoice = checkSubChoice (subChoice);
 			cout << "You chose " << subChoice << endl;
-			displayCars (carChoice, array, levelTotal);				
+			displayCars (carChoice, array, levelTotal, carString);
 			break;
 		case 'T':  //Turn in Car		
 			cout << "You chose T" << endl;
@@ -127,12 +129,19 @@ void menuAction (char menuChoice, int array[][LEVELS], bool& quit)
 			carChoice = checkSubChoice (subChoice);
 			cout << "You chose " << subChoice << endl;
 			if (carChoice != 4){
-				displayCars (carChoice, array, levelTotal);				
+				displayCars (carChoice, array, levelTotal, carString);				
 				if (levelTotal == ALL_LVL_FULL)
 					cout <<  "Error - Car is being returned to the wrong company" << endl;
 				else {				
-					parkLevel = parkWhere ();
-					checkPark(carChoice, parkLevel, array);
+					parkLevel = parkWhere (); //promt user to select where to park
+					checkPark(carChoice, parkLevel, array); //error check					
+					array[carChoice][parkLevel] = array[carChoice][parkLevel] +1;//add a car to the spot
+					levelTotal = levelTotal + 1; //aggregate total car avail					
+					cout << "Okay to park car in " << carString << " row of level " << carChoice <<  endl;
+					cout << levelTotal  << " " << carString <<  " cars will now be available " <<  endl;
+					system ("PAUSE");
+					printArray (array);
+
 				} //end else
 			} //end if
 			break;
@@ -211,9 +220,9 @@ void printArray (int array[][LEVELS])
 // INPUT:  
 //       Parameter:  array - matrix to dispaly
 //********************************************************************* 
-void displayCars (int car_type, int array[][LEVELS], int& lineCount)		
+void displayCars (int car_type, int array[][LEVELS], int& lineCount, string& carString)		
 {
-  string carString;
+  //string carString;
   if (car_type != 4) {//only display if not none
 	  //carType carList; // enumerated type carList 
 	  lineCount = 0; //initialize var
@@ -259,7 +268,8 @@ void fullGarage (int array[][LEVELS])
   for (int car_type = 0; car_type < CAR_TYPES; car_type++) {
       
       for (int level = 0; level < LEVELS; level++)
-          array[car_type][level] = MAX_CARS;        
+          //array[car_type][level] = MAX_CARS;
+		  array[car_type][level] = EMPTY_CARS;
       
   }    // end outer for
 
@@ -487,7 +497,6 @@ int checkPark (int car_type, int& menuChoice, int array[][LEVELS])
 			cout << "Error - Level " << menuChoice << " already contains " << MAX_CARS <<  endl;
 		
 		menuChoice = parkWhere(); //re promt for user input		
-	}    // end while
-	cout << "valid input" << endl;
+	}    // end while	
 return menuChoice;
 } // end of checkMenuChoice
