@@ -53,7 +53,8 @@ const int ERROR_1 = 1; // unique error message
 const int ERROR_2 = 2; // unique error message
 const int ERROR_3 = 3; // unique error message
 const int ALL_LVL_FULL = 30; // level is filled with cars
-          
+const int ALL_LVL_EMPTY  = 0; // level is empty        
+
 //prototypes
 void showDescription (string DESCRIPTION);
 void fullGarage (int array[][LEVELS]);
@@ -69,6 +70,7 @@ int parkWhere ();
 int checkPark (int car_type, int& menuChoice, int array[][LEVELS]);
 void printArray (int array[][LEVELS]);
 void displayCars (int car_type, int array[][LEVELS], int& lineCount, string& carString);
+int emptySpot (int car_type, int array[][LEVELS]);
 
 /******************************************************************************
 //  FUNCTION:	  main
@@ -121,7 +123,21 @@ void menuAction (char menuChoice, int array[][LEVELS], bool& quit)
 			subChoice = subMenu();
 			carChoice = checkSubChoice (subChoice);
 			cout << "You chose " << subChoice << endl;
-			displayCars (carChoice, array, levelTotal, carString);
+			if (carChoice != 4){ // user chose to return to menu
+				displayCars (carChoice, array, levelTotal, carString);
+				if (levelTotal == ALL_LVL_EMPTY) // no parking spots avail
+					cout <<  "Error - There are no cars available of that type" << endl;
+				else {
+					parkLevel = emptySpot (carChoice, array); //find a parking spot
+					array[carChoice][parkLevel] = array[carChoice][parkLevel] - 1;//subtract a car to the spot
+					levelTotal = levelTotal - 1; //subtract total car avail					06
+					cout << "Pick up car from  " << carString << " row of level " << parkLevel <<  endl;
+					cout << levelTotal  << " " << carString <<  " cars will now be available " <<  endl;
+					system ("PAUSE");
+					printArray (array);
+				} //end else
+			} //end else
+			
 			break;
 		case 'T':  //Turn in Car		
 			cout << "You chose T" << endl;
@@ -137,7 +153,7 @@ void menuAction (char menuChoice, int array[][LEVELS], bool& quit)
 					checkPark(carChoice, parkLevel, array); //error check					
 					array[carChoice][parkLevel] = array[carChoice][parkLevel] +1;//add a car to the spot
 					levelTotal = levelTotal + 1; //aggregate total car avail					
-					cout << "Okay to park car in " << carString << " row of level " << carChoice <<  endl;
+					cout << "Okay to park car in " << carString << " row of level " << parkLevel <<  endl;
 					cout << levelTotal  << " " << carString <<  " cars will now be available " <<  endl;
 					system ("PAUSE");
 					printArray (array);
@@ -268,8 +284,7 @@ void fullGarage (int array[][LEVELS])
   for (int car_type = 0; car_type < CAR_TYPES; car_type++) {
       
       for (int level = 0; level < LEVELS; level++)
-          //array[car_type][level] = MAX_CARS;
-		  array[car_type][level] = EMPTY_CARS;
+          array[car_type][level] = MAX_CARS;	  
       
   }    // end outer for
 
@@ -488,15 +503,50 @@ return menuChoice;
 int checkPark (int car_type, int& menuChoice, int array[][LEVELS])
 {	
  //loop until valid input 	
-	while( ( array [car_type] [menuChoice] > MAX_CARS) || (menuChoice < 0) || (menuChoice > MAX_CARS) ) {
+	while( ( array [car_type] [menuChoice] >= MAX_CARS) || (menuChoice < 0) || (menuChoice > MAX_CARS) ) {
 		cout << "array value is " << array [car_type] [menuChoice] << endl;
 		if ( (menuChoice < 0) || (menuChoice > MAX_CARS) )
 			cout << menuChoice << " is out of bounds" << endl;
 		
-		else if (array [car_type] [menuChoice] > MAX_CARS) 				
+		else if (array [car_type] [menuChoice] >= MAX_CARS) 				
 			cout << "Error - Level " << menuChoice << " already contains " << MAX_CARS <<  endl;
 		
 		menuChoice = parkWhere(); //re promt for user input		
 	}    // end while	
 return menuChoice;
 } // end of checkMenuChoice
+
+//********************************************************************* 
+// Function:         emptySpot 
+// Description:      Fills garage with the maximum cars 5 per level
+// INPUT:  
+//       Parameter:  array - matrix to initialize values
+//********************************************************************* 
+int emptySpot (int car_type, int array[][LEVELS])
+{
+ 
+int spot = 10;      
+int level = 5;
+	//do 
+	//for (int level = 5; level > 0; level--) 
+	//{
+	//	cout<< "level = " << level << endl;
+	//	cout << "value in array" << array[car_type][level] << endl;
+ //         if (array[car_type][level] > 1)			  
+	//		  spot = level;
+	//	  
+	//} //end for loop
+	//while (spot == 10);
+ //     cout << "Spot was found at level " << spot << endl;
+  
+	do {		
+		cout << "level = " << level << endl;
+		cout << "value in array" << array[car_type][level] << endl;
+		 if (array[car_type][level] > 0)
+			spot = level;
+		 else 
+			 level--;
+	} while ( (spot == 10) && (level > 0 ) );
+
+  return spot;
+}  //end of fullGarage
