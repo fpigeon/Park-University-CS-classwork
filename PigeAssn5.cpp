@@ -2,11 +2,27 @@
 Author: Frank Pigeon
 Class: CS362
 Assignment: Week 5
-Program helps keep track of the realtor's association homes for sale.
-Processing: Uses array of records to store housing listings.
-Output: Outputs the records in the file to screen and at the end asks
-user if they want to commit changes to LISTINGS.txt
-FUNCTIONS:	 main - calls other functions and initializes array of records			 
+Program helps keep track of rental cars.
+Processing: Uses 2D arrays to track where rental cars are parked.
+Output: Outputs the records in the binary file to screen and at the end asks
+user if they want to commit changes to GARBAGE.BIN
+FUNCTIONS:	main - calls other functions and initializes array of records
+			showDescription - shows program description
+			fullGarage - fills the 2D array with max cars which is 5
+			emptyGarage - fills the 2D array with zero cars which is 0
+			displayMenu - displays the main menu and accepts input
+			checkMenuChoice - error checks user input from displayMenu
+			openBinFile - opens the binary file and reads existing data into the array
+			subMenu - displays sub menu and prompts for type of car
+			checkSubChoice - error checks subMenu input
+			menuAction - takes action based on user input
+			convertCarToString - works with enum type carType
+			parkWhere- prompts which level to park car
+			checkPark - error checks parkWhere input
+			printArray - displays the data in the 2D array to screen
+			displayCars - displays data in array for car type
+			emptySpot - returns where to park rental
+			closeBinFile - writes to binary file
 ------------------------------------------------------------------------------*/
 
 //Header File
@@ -41,10 +57,10 @@ void showDescription (string DESCRIPTION);
 void fullGarage (int array[][LEVELS]);
 void emptyGarage (int array[][LEVELS]);
 char displayMenu ();
-char checkMenuChoice (char& menuChoice);
+char checkMenuChoice (char menuChoice);
 void openBinFile (int garage[][LEVELS]);
 char subMenu ();
-int checkSubChoice (char& menuChoice);
+int checkSubChoice (char menuChoice);
 void menuAction (char menuChoice, int array[][LEVELS], bool& quit);
 string convertCarToString (int carList);
 int parkWhere ();
@@ -57,8 +73,9 @@ void closeBinFile (int garage[][LEVELS]);
 /******************************************************************************
 //  FUNCTION:	  main
 //  DESCRIPTION:  Calls other functions and intializes array of records
-//  INPUT: File:  Reads the LISTINGS.TXT if user desires
-//  CALLS TO:	  showDescription, loadExistingData, displayMenu, checkMenuChoice, menuAction
+//  INPUT: File:  Reads the GARBAGE.BIN binary file if exists
+//  CALLS TO:	  showDescription, openBinFile, printArray, displayMenu, checkMenuChoice
+				  menuAction
 ******************************************************************************/
 int main()
 {
@@ -81,12 +98,18 @@ int main()
 /*************************************************************************
   FUNCTION:	    menuAction
   DESCRIPTION:  calls functions based on user selected menu choice
-  INPUT:		Parameters:	menuChoice -user input from menu choices
-							housingList - array of records that stores listings
-							listingCount - count of listings in the array of records
-							quit - used to flag the end of the program
-  OUTPUT: 	    Parameters:	listingCount - count of listings in the array of records
-							quit - used to flag the end of the program
+  INPUT:		
+     Parameters:	menuChoice -user input from menu choices							
+					array - 2D array hold level, row, and num of cars parked
+					quit - used to flag the end of the program
+	 File: None
+  OUTPUT:
+	 Return Val: void
+     Parameters:	array - 2D array hold level, row, and num of cars parked
+					quit - used to flag the end of the program
+	 File: None
+ CALLS TO:	subMenu, checkSubChoice, displayCars, emptySpot, parkWhere, checkPark
+            closeBinFile
 *************************************************************************/
 void menuAction (char menuChoice, int array[][LEVELS], bool& quit)
 {
@@ -105,16 +128,16 @@ void menuAction (char menuChoice, int array[][LEVELS], bool& quit)
 				displayCars (carChoice, array, levelTotal, carString);
 				if (levelTotal == ALL_LVL_EMPTY) // no parking spots avail
 					cout <<  "Error - There are no cars available of that type" << endl;
-				else {
+				else {  //input is good continue
 					parkLevel = emptySpot (carChoice, array); //find a parking spot
 					array[carChoice][parkLevel] = array[carChoice][parkLevel] - 1;//subtract a car to the spot
 					levelTotal = levelTotal - 1; //subtract total car avail					06
 					cout << "Pick up car from  " << carString << " row of level " << parkLevel <<  endl;
 					cout << levelTotal  << " " << carString <<  " cars will now be available " <<  endl;
 					system ("PAUSE");
-					printArray (array);
+					printArray (array); //display updated array
 				} //end else
-			} //end else			
+			} //end if not 4		
 			break;
 		case 'T':  //Turn in Car					
 			subChoice = subMenu();
@@ -123,7 +146,7 @@ void menuAction (char menuChoice, int array[][LEVELS], bool& quit)
 				displayCars (carChoice, array, levelTotal, carString);				
 				if (levelTotal == ALL_LVL_FULL)
 					cout <<  "Error - Car is being returned to the wrong company" << endl;
-				else {				
+				else {	//input is good continue			
 					parkLevel = parkWhere (); //promt user to select where to park
 					checkPark(carChoice, parkLevel, array); //error check					
 					array[carChoice][parkLevel] = array[carChoice][parkLevel] +1;//add a car to the spot
@@ -131,7 +154,7 @@ void menuAction (char menuChoice, int array[][LEVELS], bool& quit)
 					cout << "Okay to park car in " << carString << " row of level " << parkLevel <<  endl;
 					cout << levelTotal  << " " << carString <<  " cars will now be available " <<  endl;
 					system ("PAUSE");
-					printArray (array);
+					printArray (array); //display updated array
 
 				} //end else
 			} //end if
@@ -141,7 +164,7 @@ void menuAction (char menuChoice, int array[][LEVELS], bool& quit)
 			cin >> commitChange;
 			commitChange = toupper (commitChange);
 			if (commitChange == 'Y')
-			closeBinFile (array);
+				closeBinFile (array);
 			quit = true;
 			break;
 	} //end switch
@@ -151,10 +174,18 @@ void menuAction (char menuChoice, int array[][LEVELS], bool& quit)
 /*************************************************************************
   FUNCTION:	    showDescription
   DESCRIPTION:  displays program description to screen
-  INPUT:		Parameters:	DESCRIPTION - description of what the program does
-
+  INPUT:		
+     Parameters:   DESCRIPTION - description of what the program does											
+	 File: None
+  OUTPUT:
+	 Return Val: void
+     Parameters: none
+	 File:  none
+ CALLS TO:	none
 *************************************************************************/
-void showDescription (string DESCRIPTION){
+
+void showDescription (string DESCRIPTION)
+{
     cout << endl;
     cout << "------------------------------------------------------" << endl;
     cout << DESCRIPTION << endl;
@@ -166,13 +197,20 @@ void showDescription (string DESCRIPTION){
 } // end of showDescription
 
 
+/*************************************************************************
+  FUNCTION:	    printArray
+  DESCRIPTION:  displays contents of the 2D array and totals cars per type
+                and the total cars in te garage
+  INPUT:		
+     Parameters:    array - 2D array hold level, row, and num of cars parked					
+	 File: None
+  OUTPUT:
+	 Return Val: void
+     Parameters:	array - 2D array hold level, row, and num of cars parked					
+	 File: None
+ CALLS TO:	none
+*************************************************************************/
 
-//********************************************************************* 
-// Function:         printArray 
-// Description:      Displays values in one matrix, neatly by row
-// INPUT:  
-//       Parameter:  array - matrix to dispaly
-//********************************************************************* 
 void printArray (int array[][LEVELS])		
 {
   int lineCount = 0,
@@ -197,28 +235,40 @@ void printArray (int array[][LEVELS])
 	  totalCount += lineCount; // total values for all avaiavle cars
 	  
   }    // end outer for
+  
   //Display Totals for Loop
   cout << setw(51) << "-----"<< endl;
   cout << "Total Cars Available for Rental" << setw(20) << totalCount << endl;
-
+  //Spacing
   cout << endl << endl;
   return;
-}
-//********************************************************************* 
-// Function:         displayCars
-// Description:      Displays values in one matrix, neatly by row
-// INPUT:  
-//       Parameter:  array - matrix to dispaly
-//********************************************************************* 
+} //end of printArray
+
+/*************************************************************************
+  FUNCTION:	    displayCars
+  DESCRIPTION:  calls functions based on user selected menu choice
+  INPUT:		
+     Parameters:	car type - type of car selected
+					array - 2D array hold level, row, and num of cars parked
+					lineCount - total of cars in the garage for type
+					carString - car type string for output
+	 File: None
+  OUTPUT:
+	 Return Val: void
+     Parameters:	array - 2D array hold level, row, and num of cars parked
+					lineCount - total of cars in the garage for type
+					carString - car type string for output					
+	 File: None
+ CALLS TO: None
+*************************************************************************/
+
 void displayCars (int car_type, int array[][LEVELS], int& lineCount, string& carString)		
 {
-  //string carString;
-  if (car_type != 4) {//only display if not none
-	  //carType carList; // enumerated type carList 
+  
+  if (car_type != 4) {//only display if return to menu not selected
 	  lineCount = 0; //initialize var
 	  const string CAR_STRINGS[] = {"Compact  ", "Mid-Size ", "Full Size",
-					  "SUV      "};
-	  
+					  "SUV      "};	  
 	  //Output header  	  
 	  carString = convertCarToString (car_type);
 	  cout << "Number of " << carString << " Cars Parked on each Level" << endl;
@@ -228,28 +278,35 @@ void displayCars (int car_type, int array[][LEVELS], int& lineCount, string& car
 		  setw(9) << "Total" << endl << endl;
   
 	  // display array data per line & track line total &total total	  
-		cout << CAR_STRINGS[car_type];
-		for (int level = 0; level < LEVELS; level++){
+	  cout << CAR_STRINGS[car_type];
+	  for (int level = 0; level < LEVELS; level++){
 		cout << setw(6) << array[car_type][level];
 		lineCount += array[car_type][level]; // track car total for line
-		} //end inner loop
+	   } //end inner loop
 	  	
 		//Display total for the ar type
-		cout << setw(6) << lineCount << endl;	   
+	  cout << setw(6) << lineCount << endl;	   
 
 	  //spacing
 	  cout << endl << endl;
   } // end of if
   
   return;
-}
+}  //end of displayCars
 
-//********************************************************************* 
-// Function:         fullGarage 
-// Description:      Fills garage with the maximum cars 5 per level
-// INPUT:  
-//       Parameter:  array - matrix to initialize values
-//********************************************************************* 
+/*************************************************************************
+  FUNCTION:	    fullGarage
+  DESCRIPTION:  Fills garage with the maximum cars 5 per level
+  INPUT:		
+     Parameters:	array - 2D array hold level, row, and num of cars parked					
+	 File: None
+  OUTPUT:
+	 Return Val: void
+     Parameters:	array - 2D array hold level, row, and num of cars parked					
+	 File: None
+ CALLS TO: None
+*************************************************************************/
+
 void fullGarage (int array[][LEVELS])		
 {
   for (int car_type = 0; car_type < CAR_TYPES; car_type++) {
@@ -262,12 +319,18 @@ void fullGarage (int array[][LEVELS])
   return;
 }  //end of fullGarage
 
-//********************************************************************* 
-// Function:         emptyGarage 
-// Description:      Fills garage with the maximum cars 5 per level
-// INPUT:  
-//       Parameter:  array - matrix to initialize values
-//********************************************************************* 
+/*************************************************************************
+  FUNCTION:	    emptyGarage
+  DESCRIPTION:  Fills garage with the zero cars 0 per level
+  INPUT:		
+     Parameters:	array - 2D array hold level, row, and num of cars parked					
+	 File: None
+  OUTPUT:
+	 Return Val: void
+     Parameters:	array - 2D array hold level, row, and num of cars parked					
+	 File: None
+ CALLS TO: None
+*************************************************************************/
 void emptyGarage (int array[][LEVELS])		
 {
   for (int car_type = 0; car_type < CAR_TYPES; car_type++) {
@@ -279,11 +342,18 @@ void emptyGarage (int array[][LEVELS])
   return;
 }  //end of emptyGarage
 
-// **************************************************************************
-// FUNCTION:     displayMenu 
-// DESCRIPTION:  Displays the menu choices
-// OUTPUT:       menuChoice - user input from the menu choices
-// **************************************************************************
+/*************************************************************************
+  FUNCTION:	    displayMenu
+  DESCRIPTION:  Displays the main menu choices and prompts for input from menu
+  INPUT:		
+     Parameters:	none
+	 File: None
+  OUTPUT:
+	 Return Val: char menuChoice - user input from the menu
+     Parameters:	none
+	 File: None
+ CALLS TO:	menuChoice
+*************************************************************************/
 char displayMenu ()
 {
 //local variables
@@ -299,15 +369,21 @@ char  menuChoice;
 	cin >> menuChoice;
 	menuChoice = toupper (menuChoice); //uppercase user input
 return menuChoice;
-} // end of actionMenu
+} // end of displayMenu
 
-// **************************************************************************
-// FUNCTION:     checkMenuChoice 
-// DESCRIPTION:  Validates user input menu choice re-prompting until correct
-// INPUT:        Parameter:  menuChoice -user input from menu choices
-// OUTPUT:       Parameter:  menuChoice  - validated menu choice
-// **************************************************************************
-char checkMenuChoice (char& menuChoice)
+/*************************************************************************
+  FUNCTION:	    checkMenuChoice
+  DESCRIPTION:  Validates user input menu choice re-prompting until correct
+  INPUT:		
+     Parameters:	menuChoice - user selected input from displayMenu
+	 File: None
+  OUTPUT:
+	 Return Val: char menuChoice - validated input from the menu
+     Parameters:	none
+	 File: None
+ CALLS TO:	displayMenu
+*************************************************************************/
+char checkMenuChoice (char menuChoice)
 {	
  //loop until valid input 	
 	while( (menuChoice != 'R') && (menuChoice != 'T')
@@ -321,13 +397,20 @@ char checkMenuChoice (char& menuChoice)
 return menuChoice;
 } // end of checkMenuChoice
 
-// **************************************************************************
-// FUNCTION:     checkSubChoice 
-// DESCRIPTION:  Validates user input menu choice re-prompting until correct
-// INPUT:        Parameter:  menuChoice -user input from menu choices
-// OUTPUT:       Parameter:  menuChoice  - validated menu choice
-// **************************************************************************
-int checkSubChoice (char& menuChoice)
+/*************************************************************************
+  FUNCTION:	    checkSubChoice
+  DESCRIPTION:  Validates user input menu choice re-prompting until correct
+  INPUT:		
+     Parameters:	menuChoice - user selected input from displayMenu
+	 File: None
+  OUTPUT:
+	 Return Val: int menuChoice - validated input from the menu
+	             converted to int type
+     Parameters:	none
+	 File: None
+ CALLS TO:	subMenu
+*************************************************************************/
+int checkSubChoice (char menuChoice)
 {
   int intMenuChoice; // converted char to int to work with enumerated type carType
  //loop until valid input 	
@@ -363,14 +446,21 @@ int checkSubChoice (char& menuChoice)
 	} //end switch
 
 return intMenuChoice;
-} // end of checkMenuChoice
+} // end of checkSubChoice
 
+/*************************************************************************
+  FUNCTION:	    subMenu
+  DESCRIPTION:  Displays the menu choices and prompts for input from menu
+  INPUT:		
+     Parameters:	none
+	 File: None
+  OUTPUT:
+	 Return Val: char menuChoice - user input from the menu
+     Parameters:	none
+	 File: None
+ CALLS TO:	menuChoice
+*************************************************************************/
 
-// **************************************************************************
-// FUNCTION:     subMenu 
-// DESCRIPTION:  Displays the menu choices
-// OUTPUT:       menuChoice - user input from the menu choices
-// **************************************************************************
 char subMenu ()
 {
 //local variables
@@ -388,14 +478,21 @@ char  menuChoice;
 	cin >> menuChoice;
 	menuChoice = toupper (menuChoice); //uppercase user input
 return menuChoice;
-} // end of actionMenu
+} // end of subMenu
 
-// **************************************************************************
-// FUNCTION:     convertCarToString 
-// DESCRIPTION:  turn enum data into string for output purposes
-// INPUT:        Parameter:  currentStatus - enum data type for listing status
-// OUTPUT:       Parameter:  statusString  - converted enum type to string
-// **************************************************************************
+/*************************************************************************
+  FUNCTION:	    convertCarToString
+  DESCRIPTION:  turn enum data into string for output purposes
+  INPUT:		
+     Parameters:	carList - int type of car type
+	 File: None
+  OUTPUT:
+	 Return Val: string  carString - string conversion of car type
+     Parameters:	none
+	 File: None
+ CALLS TO:	none
+*************************************************************************/
+
 string convertCarToString (int carList)
 {
 	string carString;
@@ -414,11 +511,19 @@ string convertCarToString (int carList)
 	return carString;
 } // end of convertCarToString
 
-// **************************************************************************
-// FUNCTION:     parkWhere 
-// DESCRIPTION:  Displays the menu choices
-// OUTPUT:       menuChoice - user input from the menu choices
-// **************************************************************************
+/*************************************************************************
+  FUNCTION:	    parkWhere
+  DESCRIPTION:  prompts user to select level in garage to park car
+  INPUT:		
+     Parameters:	none
+	 File: None
+  OUTPUT:
+	 Return Val: char menuChoice - user input from the menu
+     Parameters:	none
+	 File: None
+ CALLS TO:	menuChoice
+*************************************************************************/
+
 int parkWhere ()
 {
 //local variables
@@ -430,17 +535,26 @@ int  menuChoice;
 	cin >> menuChoice;
 	
 return menuChoice;
-} // end of actionMenu
+} // end of parkWhere
 
-// **************************************************************************
-// FUNCTION:     checkPark 
-// DESCRIPTION:  Validates user input menu choice re-prompting until correct
-// INPUT:        Parameter:  menuChoice -user input from menu choices
-// OUTPUT:       Parameter:  menuChoice  - validated menu choice
-// **************************************************************************
+/*************************************************************************
+  FUNCTION:	    checkPark
+  DESCRIPTION:  Validates user input menu choice re-prompting until correct
+  INPUT:		
+     Parameters:  carType - type of car selected	
+				  menuChoice - user selected input from parkWhere
+				  array - 2D array hold level, row, and num of cars parked
+	 File: None
+  OUTPUT:
+	 Return Val: int menuChoice - validated input from the menu	             
+     Parameters:	none
+	 File: None
+ CALLS TO:	parkWhere
+*************************************************************************/
+
 int checkPark (int car_type, int& menuChoice, int array[][LEVELS])
 {	
- //loop until valid input 	
+    //loop until valid input 	
 	while( ( array [car_type] [menuChoice] >= MAX_CARS) || (menuChoice < 0) || (menuChoice > MAX_CARS) ) {
 		//cout << "array value is " << array [car_type] [menuChoice] << endl;
 		if ( (menuChoice < 0) || (menuChoice > MAX_CARS) )
@@ -452,23 +566,29 @@ int checkPark (int car_type, int& menuChoice, int array[][LEVELS])
 		menuChoice = parkWhere(); //re promt for user input		
 	}    // end while	
 return menuChoice;
-} // end of checkMenuChoice
+} // end of checkPark
 
-//********************************************************************* 
-// Function:         emptySpot 
-// Description:      Fills garage with the maximum cars 5 per level
-// INPUT:  
-//       Parameter:  array - matrix to initialize values
-//********************************************************************* 
+/*************************************************************************
+  FUNCTION:	    emptySpot
+  DESCRIPTION:  searches for a level to rent car from top level down
+  INPUT:		
+     Parameters:  carType - type of car selected	
+				  array - 2D array hold level, row, and num of cars parked
+	 File: None
+  OUTPUT:
+	 Return Val: int spot - validated spot to rent from	             
+     Parameters:	none
+	 File: None
+ CALLS TO: None
+*************************************************************************/
 int emptySpot (int car_type, int array[][LEVELS])
 {
  
-int spot = 10;      //inialize out of range
+int spot = 10; //inialize out of range
 int level = 5; //start at the top level
   
 	do {		
-		//cout << "level = " << level << endl;
-		//cout << "value in array" << array[car_type][level] << endl;
+		//start looking for a spot from the top level down
 		 if (array[car_type][level] > 0)
 			spot = level;
 		 else 
@@ -476,13 +596,23 @@ int level = 5; //start at the top level
 	} while ( (spot == 10) && (level > 0 ) );
 
   return spot;
-}  //end of fullGarage
+}  //end of emptySpot
 
-// **************************************************************************
-// FUNCTION:     openBinFile 
-// DESCRIPTION:  Opens Binary File
-// OUTPUT:       None
-// **************************************************************************
+/*************************************************************************
+  FUNCTION:	    openBinFile
+  DESCRIPTION:  Opens Binary File GARBAGE.BIN
+  INPUT:		
+     Parameters:	array - 2D array hold level, row, and num of cars parked
+					
+	 File: reads info from GARBAGE.BIN
+	       level index, row index, and number of cars parked in a row
+  OUTPUT:
+	 Return Val: void
+     Parameters:	array - 2D array hold level, row, and num of cars parked					
+	 File: None
+ CALLS TO: None
+*************************************************************************/
+
 void openBinFile (int garage[][LEVELS])
 {	
 	int row, //temporary integer variable to hold input
@@ -492,7 +622,7 @@ void openBinFile (int garage[][LEVELS])
 	
 	binFile.open (GARBAGE_FILENAME.c_str(), ios::binary | ios::in );
 
-	if (!binFile)			
+	if (!binFile)  //if bin file does not exist
 		fullGarage (garage); //fill array with max values (initialize)				
 	else {
 		emptyGarage (garage); //fill array with zero values (initialize)
@@ -510,6 +640,21 @@ void openBinFile (int garage[][LEVELS])
 	binFile.close();
 	 		    
 } //end of openBinFile
+
+/*************************************************************************
+  FUNCTION:	    closeBinFile
+  DESCRIPTION:  Writes to Binary File GARBAGE.BIN
+  INPUT:		
+     Parameters:	array - 2D array hold level, row, and num of cars parked
+					
+	 File: None
+  OUTPUT:
+	 Return Val: void
+     Parameters:	array - 2D array hold level, row, and num of cars parked					
+	 File: writes data to GARBAGE.BIN including 
+	       level index, row index, and number of cars parked in a row
+ CALLS TO: None
+*************************************************************************/
 
 // **************************************************************************
 // FUNCTION:     closeBinFile 
@@ -541,4 +686,4 @@ void closeBinFile (int garage[][LEVELS])
 	binFile.close();
 	system("PAUSE");	
 	return;
-} //end of openBinFile
+} //end of closeBinFile
