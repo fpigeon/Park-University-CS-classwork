@@ -6,26 +6,7 @@ Program helps keep track of the realtor's association homes for sale.
 Processing: Uses array of records to store housing listings.
 Output: Outputs the records in the file to screen and at the end asks
 user if they want to commit changes to LISTINGS.txt
-FUNCTIONS:	 main - calls other functions and initializes array of records
-			 showDescription - displays program description to screen
-			 readListings - reads input file and stores them in the array of records
-             loadExistingData - prompts user if they want to load existing data from
-			    the input file or start a new
-			 displayListings - displays to screen contents of the array of records
-			 convertStatusToString - works with the enumerated type for status
-			 checkMenuChoice - validates menu choice
-			 displayMenu - displays menu choices to the screen
-			 menuAction - calls other functions based on menu choice
-			 addListings - add new listings to the array of records
-			 displayMLS - displays to screen all MLS fields for user to select one
-			    to delete
-			deleteItem - removes a record from the array of records
-			writeListings - outputs array of records to output file
-			MLSinput - promt, read, and validate MLS input
-			priceInput - promt, read, and validate price input
-			statusInput - promt, read, and validate status input
-			zipInput - promt, read, and validate zip code input
-			realtorInput - promt, read, and validate realtor input
+FUNCTIONS:	 main - calls other functions and initializes array of records			 
 ------------------------------------------------------------------------------*/
 
 //Header File
@@ -71,6 +52,7 @@ int checkPark (int car_type, int& menuChoice, int array[][LEVELS]);
 void printArray (int array[][LEVELS]);
 void displayCars (int car_type, int array[][LEVELS], int& lineCount, string& carString);
 int emptySpot (int car_type, int array[][LEVELS]);
+void closeBinFile (int garage[][LEVELS]);
 
 /******************************************************************************
 //  FUNCTION:	  main
@@ -92,7 +74,7 @@ int main()
 		menuChoice = displayMenu ();  //prompt user for input from main menu
 		checkMenuChoice (menuChoice); //error check user input
 		menuAction (menuChoice, garage, quit); // take action based on user choice
-	} while (quit == false); 	
+	} while (quit == false); 	//exit only if flag is set to false
     return 0;
 }  // end main
 
@@ -108,8 +90,6 @@ int main()
 *************************************************************************/
 void menuAction (char menuChoice, int array[][LEVELS], bool& quit)
 {
-// int mlsDelete; //user input to delete an MLS Listing
-// bool deleted; // index to delete
  char commitChange, // user input to commit changes
 	  subChoice; // user input from sub menu
  int carChoice = 4, //converted int from char
@@ -118,11 +98,9 @@ void menuAction (char menuChoice, int array[][LEVELS], bool& quit)
  string carString;
  
 	switch (menuChoice) {
-		case 'R':  //Rental Car	
-			cout << "You chose R" << endl;
+		case 'R':  //Rental Car				
 			subChoice = subMenu();
-			carChoice = checkSubChoice (subChoice);
-			cout << "You chose " << subChoice << endl;
+			carChoice = checkSubChoice (subChoice);			
 			if (carChoice != 4){ // user chose to return to menu
 				displayCars (carChoice, array, levelTotal, carString);
 				if (levelTotal == ALL_LVL_EMPTY) // no parking spots avail
@@ -136,15 +114,12 @@ void menuAction (char menuChoice, int array[][LEVELS], bool& quit)
 					system ("PAUSE");
 					printArray (array);
 				} //end else
-			} //end else
-			
+			} //end else			
 			break;
-		case 'T':  //Turn in Car		
-			cout << "You chose T" << endl;
+		case 'T':  //Turn in Car					
 			subChoice = subMenu();
-			carChoice = checkSubChoice (subChoice);
-			cout << "You chose " << subChoice << endl;
-			if (carChoice != 4){
+			carChoice = checkSubChoice (subChoice);			
+			if (carChoice != 4){ // user chose to return to menu
 				displayCars (carChoice, array, levelTotal, carString);				
 				if (levelTotal == ALL_LVL_FULL)
 					cout <<  "Error - Car is being returned to the wrong company" << endl;
@@ -161,13 +136,12 @@ void menuAction (char menuChoice, int array[][LEVELS], bool& quit)
 				} //end else
 			} //end if
 			break;
-		case 'E': // Exit		
-			cout << "You chose E" << endl;
+		case 'E': // Exit					
 			cout << "Do you want to commit changes to file (Y/N)?: ";
 			cin >> commitChange;
 			commitChange = toupper (commitChange);
-			//if (commitChange == 'Y')
-			//	writeListings(housingList, listingCount);
+			if (commitChange == 'Y')
+			closeBinFile (array);
 			quit = true;
 			break;
 	} //end switch
@@ -244,10 +218,8 @@ void displayCars (int car_type, int array[][LEVELS], int& lineCount, string& car
 	  lineCount = 0; //initialize var
 	  const string CAR_STRINGS[] = {"Compact  ", "Mid-Size ", "Full Size",
 					  "SUV      "};
-	  //const string CARS[] = {"Compact", "Mid-Size", "Full Size",
-	  //                "SUV"};
-	  //Output header  
-	  //cout << "Number of " << CARS [car_type]<< " Cars Parked on each Level" << endl;
+	  
+	  //Output header  	  
 	  carString = convertCarToString (car_type);
 	  cout << "Number of " << carString << " Cars Parked on each Level" << endl;
 
@@ -255,15 +227,14 @@ void displayCars (int car_type, int array[][LEVELS], int& lineCount, string& car
 		  setw(6) << "3" << setw(6) << "4" << setw(6) << "5" << 
 		  setw(9) << "Total" << endl << endl;
   
-	  // display array data per line & track line total &total total
-	  //for (int car_type = 0; car_type < CAR_TYPES; car_type++) {
-	  //    lineCount = 0; //clear line counter
+	  // display array data per line & track line total &total total	  
 		cout << CAR_STRINGS[car_type];
 		for (int level = 0; level < LEVELS; level++){
 		cout << setw(6) << array[car_type][level];
 		lineCount += array[car_type][level]; // track car total for line
 		} //end inner loop
-	  	  
+	  	
+		//Display total for the ar type
 		cout << setw(6) << lineCount << endl;	   
 
 	  //spacing
@@ -420,39 +391,6 @@ return menuChoice;
 } // end of actionMenu
 
 // **************************************************************************
-// FUNCTION:     openBinFile 
-// DESCRIPTION:  Opens Binary File
-// OUTPUT:       None
-// **************************************************************************
-void openBinFile (int garage[][LEVELS])
-{	
-	int row, //temporary integer variable to hold input
-		col,
-		cars;
-	fstream binFile;  // in&output file stream (binary file)
-	
-	binFile.open (GARBAGE_FILENAME.c_str(), ios::binary | ios::in );
-
-	if (!binFile)			
-		fullGarage (garage); //fill array with max values (initialize)				
-	else {
-		emptyGarage (garage); //fill array with zero values (initialize)
-	    // priming read for first data item
-		binFile.read( reinterpret_cast<char*> (&row), sizeof(int) );
-		while (binFile){ //number successfully read				
-			binFile.read( reinterpret_cast<char*> (&col), sizeof(int) );
-			binFile.read( reinterpret_cast<char*> (&cars), sizeof(int) );			
-			garage[row][col] = cars;
-			binFile.read( reinterpret_cast<char*> (&row), sizeof(int) );
-		} // end of while		
-	    cout << "All file data has been read." << endl << endl;
-	}  //end of else
-	
-	binFile.close();
-	 		    
-} //end of openBinFile
-
-// **************************************************************************
 // FUNCTION:     convertCarToString 
 // DESCRIPTION:  turn enum data into string for output purposes
 // INPUT:        Parameter:  currentStatus - enum data type for listing status
@@ -504,7 +442,7 @@ int checkPark (int car_type, int& menuChoice, int array[][LEVELS])
 {	
  //loop until valid input 	
 	while( ( array [car_type] [menuChoice] >= MAX_CARS) || (menuChoice < 0) || (menuChoice > MAX_CARS) ) {
-		cout << "array value is " << array [car_type] [menuChoice] << endl;
+		//cout << "array value is " << array [car_type] [menuChoice] << endl;
 		if ( (menuChoice < 0) || (menuChoice > MAX_CARS) )
 			cout << menuChoice << " is out of bounds" << endl;
 		
@@ -525,23 +463,12 @@ return menuChoice;
 int emptySpot (int car_type, int array[][LEVELS])
 {
  
-int spot = 10;      
-int level = 5;
-	//do 
-	//for (int level = 5; level > 0; level--) 
-	//{
-	//	cout<< "level = " << level << endl;
-	//	cout << "value in array" << array[car_type][level] << endl;
- //         if (array[car_type][level] > 1)			  
-	//		  spot = level;
-	//	  
-	//} //end for loop
-	//while (spot == 10);
- //     cout << "Spot was found at level " << spot << endl;
+int spot = 10;      //inialize out of range
+int level = 5; //start at the top level
   
 	do {		
-		cout << "level = " << level << endl;
-		cout << "value in array" << array[car_type][level] << endl;
+		//cout << "level = " << level << endl;
+		//cout << "value in array" << array[car_type][level] << endl;
 		 if (array[car_type][level] > 0)
 			spot = level;
 		 else 
@@ -550,3 +477,68 @@ int level = 5;
 
   return spot;
 }  //end of fullGarage
+
+// **************************************************************************
+// FUNCTION:     openBinFile 
+// DESCRIPTION:  Opens Binary File
+// OUTPUT:       None
+// **************************************************************************
+void openBinFile (int garage[][LEVELS])
+{	
+	int row, //temporary integer variable to hold input
+		col,
+		cars;
+	ifstream binFile;  // in&output file stream (binary file)
+	
+	binFile.open (GARBAGE_FILENAME.c_str(), ios::binary | ios::in );
+
+	if (!binFile)			
+		fullGarage (garage); //fill array with max values (initialize)				
+	else {
+		emptyGarage (garage); //fill array with zero values (initialize)
+	    // priming read for first data item
+		binFile.read( reinterpret_cast<char*> (&row), sizeof(int) );
+		while (binFile){ //number successfully read				
+			binFile.read( reinterpret_cast<char*> (&col), sizeof(int) );
+			binFile.read( reinterpret_cast<char*> (&cars), sizeof(int) );			
+			garage[row][col] = cars;
+			binFile.read( reinterpret_cast<char*> (&row), sizeof(int) );
+		} // end of while		
+	    cout << "All file data has been read." << endl << endl;
+	}  //end of else
+	
+	binFile.close();
+	 		    
+} //end of openBinFile
+
+// **************************************************************************
+// FUNCTION:     closeBinFile 
+// DESCRIPTION:  Opens Binary File
+// OUTPUT:       None
+// **************************************************************************
+void closeBinFile (int garage[][LEVELS])
+{	
+	int row, //temporary integer variable to hold input
+		col,
+		cars,		
+		writeCount = 0; //count how many cars were written
+	ofstream binFile;  // in&output file stream (binary file)
+	
+	binFile.open (GARBAGE_FILENAME.c_str(), ios::binary | ios::out | ios::trunc );		
+		
+	// priming read for first data item
+	for (int car_type = 0; car_type < CAR_TYPES; car_type++) {
+      
+      for (int level = 0; level < LEVELS; level++) {
+		  binFile.write( reinterpret_cast<char*> (&row), sizeof(int) );
+		  binFile.write( reinterpret_cast<char*> (&col), sizeof(int) );
+		  binFile.write( reinterpret_cast<char*> (&cars), sizeof(int) );
+		  writeCount++;
+	  }  // end inner for        	  
+    }    // end outer for
+	
+	cout << writeCount << " files has been written." << endl << endl;	
+	binFile.close();
+	system("PAUSE");	
+	return;
+} //end of openBinFile
