@@ -36,6 +36,7 @@ FUNCTIONS:	 main - calls other functions and initializes array of records
 #include <fstream> 
 #include <string>
 #include <cstddef>
+#include <cstdlib>
 
 using namespace std;
 
@@ -62,12 +63,11 @@ struct  housingRec { //define structure
     status currentStatus; // enumerated type for listing status
     string zip;  // 5+4 zip code
     string realtyCompany; // up to 20 charaacters any combo of letters and spaces	
-	housingRec* next; // link to next student node
 }; // end housingRec definition
 
 struct houseNode {
     housingRec house;	
-    houseNode* nextHouse;
+    houseNode* next;
 };  // end patientNode
           
 //prototypes
@@ -76,7 +76,7 @@ void readListings(housingRec housingList[], int& num);
 void loadExistingData (housingRec housingList[], int& listingCount);
 //void displayListings (housingRec housingList[], int count);
 void displayListings (houseNode* housingList);
-houseNode* readListings (houseNode* houselist);
+void readListings (houseNode* &first);
 string convertStatusToString (status currentStatus);
 char checkMenuChoice (char& menuChoice);
 char displayMenu ();
@@ -100,11 +100,12 @@ string realtorInput ();
 int main()
 {
     //local variables		
-	houseNode* houseList = NULL;
-	houseList = readListings (houseList);	
+	houseNode* first = NULL;
+	
+	readListings (first);	
   
-	if (houseList != NULL)
-		displayListings (houseList);
+	if (first != NULL)
+		displayListings (first);
 
  //   housingRec *listTop = NULL, // Points to top house in list (initialized to NULL)
 	//	       *oneHouse;          // Temp pointer used to create new housing nodes
@@ -149,14 +150,14 @@ void showDescription (string DESCRIPTION){
   OUTPUT: 	    Parameters:	housingList - array of records that stores listings
 							num - count of listings in the array of records
 *************************************************************************/
-houseNode* readListings (houseNode* houselist)
+void readListings (houseNode* &first)
 {
 //local variables
-  ifstream inFile; // input file stream      
+  ifstream inFile; // input file stream
+  int temp;
+       
 
-  housingRec oneHouse;               //data for one house
-  
-  houseNode *tempNode,				// used to allocate memory for list
+  houseNode *newNode,				// used to allocate memory for list
 			*lastNode = NULL;       // points to last node in list
   
   inFile.open (LISTINGS_FILENAME.c_str() );    
@@ -164,41 +165,54 @@ houseNode* readListings (houseNode* houselist)
 
   // if file doesn't open present error and ask user if they
   // wish to exit or start with no data    
-  if (!inFile) { 
-   // do {        
+  if (!inFile)
+  { 
+        
       cout << "Error opening data file" << endl << endl;
-      
+      system("pause");
    // } while ( (errorChoice == 'Q') && (errorChoice == 'C') );
 	
   } // end if no file 
-      
-
-  else {  // file opened successfully 
+  else
+  {  // file opened successfully 
 	  // while read of one record is successful	 
-	 inFile >> &oneHouse; //This is where I am stuck!
-	 while ( inFile) {	 
+	 inFile >> temp; //This is where I am stuck!
+	 while( inFile)
+	 {	 
 
         // create new node and store data read into it     
-        tempNode = new houseNode;
-        tempNode->house = oneHouse;
-        tempNode->nextHouse = NULL;
-            
-        // insert node at end of list
-        if (houselist == NULL) {  
-            lastNode = tempNode;        
-            houselist = tempNode;
-        }
-        else {                
-            lastNode->nextHouse = tempNode;  
-            lastNode = tempNode;        
-        }
-     }  // end while
+        newNode = new (nothrow) houseNode;
         
-     inFile.close();   
-  } // end else
- 
-  return houselist;
-  
+        if (newNode == NULL)
+        {
+           cout << "No more memory can be allocated!" << endl;
+           system("pause");
+        }
+		else
+		{
+		  newNode->house.mlsNum = temp;
+          inFile >> newNode->house.price;
+		  inFile >> temp;
+		  newNode->house.currentStatus = static_cast<status>(temp);
+		  inFile >> newNode->house.zip;
+		  getline(inFile, newNode->house.realtyCompany);          
+          newNode->next = NULL;
+        
+          if (first == NULL)
+		    first = newNode;
+		  
+		  if (lastNode != NULL)	  
+            lastNode->next = newNode;        
+          
+		  lastNode = newNode;
+		}
+        
+		inFile >> temp;        
+     }
+  }     // end while
+        
+  inFile.close();   
+    
 } // end of readListings
 
 /*************************************************************************
@@ -209,24 +223,26 @@ houseNode* readListings (houseNode* houselist)
   OUTPUT: 	    Parameters:	housingList - array of records that stores listings
 							num - count of listings in the array of records
 *************************************************************************/
-void displayListings (houseNode* housingList)
+void displayListings (houseNode* first)
 {
-//  int idx;
-  houseNode* tempPtr = housingList;
+  //  int idx;
+  houseNode* tempPtr = first;
 
 	 cout << endl;	 
 	 cout << setw(14) << "Asking" << setw(10) << "Listing" << endl;
 	 cout << "MLS#    Price    Status     Zip Code    Realtor" << endl;
 	 cout << "------  -------  ---------  ----------  -------------------" << endl;
-	  while (tempPtr != NULL) {
-      cout << right  << tempPtr->house.mlsNum
-		   << setw(9) << tempPtr->house.price << "  "
-		   << left << setw(11) << convertStatusToString (tempPtr->house.currentStatus)
-		   << right << setw(10) << tempPtr->house.zip 
-		   << left << "  " << tempPtr->house.realtyCompany << endl;	     
 
-      cout << endl;
-      tempPtr = tempPtr->nextHouse;
+     while (tempPtr != NULL)
+	 {
+        cout << right  << tempPtr->house.mlsNum
+		     << setw(9) << tempPtr->house.price << "  "
+		     << left << setw(11) << convertStatusToString (tempPtr->house.currentStatus)
+		     << right << setw(10) << tempPtr->house.zip 
+		     << left << "  " << tempPtr->house.realtyCompany << endl;	     
+
+      //cout << endl;
+      tempPtr = tempPtr->next;
   }   // end while
 
 
