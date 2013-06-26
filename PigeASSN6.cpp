@@ -74,13 +74,12 @@ struct houseNode {
 void showDescription (string DESCRIPTION);
 void readListings(housingRec housingList[], int& num);
 void loadExistingData (housingRec housingList[], int& listingCount);
-//void displayListings (housingRec housingList[], int count);
 void displayListings (houseNode* housingList);
 void readListings (houseNode* &first);
 string convertStatusToString (status currentStatus);
 char checkMenuChoice (char& menuChoice);
 char displayMenu ();
-void menuAction (char menuChoice, housingRec housingList[], int& listingCount, bool& quit);
+void menuAction (char menuChoice, houseNode* first, bool& quit);
 void addListings (housingRec housingList[], int& count);
 void displayMLS (housingRec housingList[], int count);
 void deleteItem (int itemToDel, int& listingCount, housingRec housingList[], bool& deleted);
@@ -100,47 +99,77 @@ string realtorInput ();
 int main()
 {
     //local variables		
-	houseNode* first = NULL;
+	houseNode* first = NULL; 
 	
-	readListings (first);	
-  
-	if (first != NULL)
-		displayListings (first);
+    //int listingCount;
+	char menuChoice;
+	bool quit = false;
 
- //   housingRec *listTop = NULL, // Points to top house in list (initialized to NULL)
-	//	       *oneHouse;          // Temp pointer used to create new housing nodes
-	// oneHouse = new (nothrow) housingRec;          // allocate memory for one new housing node
-	////housingRec housingList[MAX_LISTINGS]; //array of records storing Listings
- //   int listingCount;
-	//char menuChoice;
-	//bool quit = false;
+    showDescription (DESCRIPTION); 
+	readListings (first);		
+	do {
+		menuChoice = displayMenu ();
+		checkMenuChoice (menuChoice);	 		
 
- //   showDescription (DESCRIPTION); 
-	//loadExistingData (housingList, listingCount);    
-	//do {
-	//	menuChoice = displayMenu ();
-	//	checkMenuChoice (menuChoice);	 	
-	//	menuAction (menuChoice, housingList, listingCount, quit);
-	//} while (quit == false);
+		menuAction (menuChoice, first, quit);
+	} while (quit == false);
 	system ("PAUSE");
     return 0;
 }  // end main
-/*************************************************************************
-  FUNCTION:	    showDescription
-  DESCRIPTION:  displays program description to screen
-  INPUT:		Parameters:	DESCRIPTION - description of what the program does
 
+/*************************************************************************
+  FUNCTION:	    menuAction
+  DESCRIPTION:  calls functions based on user selected menu choice
+  INPUT:		Parameters:	menuChoice -user input from menu choices
+							housingList - array of records that stores listings
+							listingCount - count of listings in the array of records
+							quit - used to flag the end of the program
+  OUTPUT: 	    Parameters:	listingCount - count of listings in the array of records
+							quit - used to flag the end of the program
 *************************************************************************/
-void showDescription (string DESCRIPTION){
-    cout << endl;
-    cout << "------------------------------------------------------" << endl;
-    cout << DESCRIPTION << endl;
-    cout << "Developed by " << DEVELOPER << endl;
-    cout << "Class: " << CLASSNUM << endl;
-    cout << "Assn: " << ASSIGNMENT << endl;
-    cout << "------------------------------------------------------" << endl;
-    cout << endl << endl;
-} // end of showDescription
+void menuAction (char menuChoice, houseNode* first, bool& quit)
+{
+ int mlsDelete; //user input to delete an MLS Listing
+ bool deleted; // index to delete
+ char commitChange; // user input to commit changes
+
+switch (menuChoice) {
+	case 'D':  //Display All
+		if (first != NULL)
+			displayListings (first);		
+		else 
+			cout << "There are no records in the file." << endl;
+		break;
+	case 'A':  //Add a Listing
+		cout << "You chose option A - Add a listing" << endl;
+		//addListings (housingList, listingCount);
+		break;
+	case 'R': // Remove a Listing
+		cout << "You chose option R - Remove a Listing" << endl;
+		//displayMLS (housingList, listingCount);		
+		//mlsDelete = MLSinput();
+		//deleteItem (mlsDelete, listingCount, housingList, deleted);
+		//if (deleted == false) //display error if not found
+  //          cout << mlsDelete << " not found in list" << endl;
+		//else { // delete the listing            
+  //          cout << "MLS Listing " << mlsDelete <<
+  //               " was deleted successfully" << endl;			
+  //       } // end else
+		break;
+	case 'C':  //Add a Listing		
+		cout << "You chose option C - Change asking price" << endl;
+		break;
+	case 'E': // Exit		
+		cout << "Do you want to commit changes to file (Y/N)?: ";
+		cin >> commitChange;
+		commitChange = toupper (commitChange);
+		//if (commitChange == 'Y')
+			//writeListings(housingList, listingCount);
+		quit = true;
+		break;
+} //end switch
+
+} // end of menuAction
 
 /*************************************************************************
   FUNCTION:	    readListings
@@ -176,7 +205,7 @@ void readListings (houseNode* &first)
   else
   {  // file opened successfully 
 	  // while read of one record is successful	 
-	 inFile >> temp; //This is where I am stuck!
+	 inFile >> temp; 
 	 while( inFile)
 	 {	 
 
@@ -239,7 +268,7 @@ void displayListings (houseNode* first)
 		     << setw(9) << tempPtr->house.price << "  "
 		     << left << setw(11) << convertStatusToString (tempPtr->house.currentStatus)
 		     << right << setw(10) << tempPtr->house.zip 
-		     << left << "  " << tempPtr->house.realtyCompany << endl;	     
+		     << left << " " << tempPtr->house.realtyCompany << endl;	     
 
       //cout << endl;
       tempPtr = tempPtr->next;
@@ -270,101 +299,51 @@ string convertStatusToString (status currentStatus)
 	return statusString;
 } // end of convertStatusToString
 
-//// **************************************************************************
-//// FUNCTION:     displayMenu 
-//// DESCRIPTION:  Displays the menu choices
-//// OUTPUT:       menuChoice - user input from the menu choices
-//// **************************************************************************
-//char displayMenu ()
-//{
-////local variables
-//char  menuChoice;
-//
-//	cout << "---------------------------------------" << endl;
-//	cout << "LOCAL REALTOR'S ASSOCIATION DATABASE" << endl;
-//	cout << "D - Display All Listings" << endl;
-//	cout << "A - Add a Listings" << endl;
-//	cout << "R - Remove a Listings" << endl;
-//	cout << "E - Exit the Program" << endl;
-//	cout << "---------------------------------------" << endl << endl;
-//	cout << "Choose an option from the menu: ";
-//	cin >> menuChoice;
-//	menuChoice = toupper (menuChoice); //uppercase user input
-//return menuChoice;
-//} // end of displayMenu
-//
-//// **************************************************************************
-//// FUNCTION:     checkMenuChoice 
-//// DESCRIPTION:  Validates user input menu choice re-prompting until correct
-//// INPUT:        Parameter:  menuChoice -user input from menu choices
-//// OUTPUT:       Parameter:  menuChoice  - validated menu choice
-//// **************************************************************************
-//char checkMenuChoice (char& menuChoice)
-//{	
-// //loop until valid input 	
-//	while( (menuChoice != 'D') && (menuChoice != 'A')
-//		&& (menuChoice != 'R') && (menuChoice != 'E') ) {
-//		if ( (menuChoice != 'D') && (menuChoice != 'A') && (menuChoice != 'R')
-//				&& (menuChoice != 'E') )
-//				cout << "Invalid Input- Please select D, A, R or E" << endl;
-//				menuChoice = displayMenu();
-//	}    // end while 
-//
-//return menuChoice;
-//} // end of checkMenuChoice
-//
-///*************************************************************************
-//  FUNCTION:	    menuAction
-//  DESCRIPTION:  calls functions based on user selected menu choice
-//  INPUT:		Parameters:	menuChoice -user input from menu choices
-//							housingList - array of records that stores listings
-//							listingCount - count of listings in the array of records
-//							quit - used to flag the end of the program
-//  OUTPUT: 	    Parameters:	listingCount - count of listings in the array of records
-//							quit - used to flag the end of the program
-//*************************************************************************/
-////void menuAction (char menuChoice, housingRec housingList[], int& listingCount, bool& quit)
-////{
-//// int mlsDelete; //user input to delete an MLS Listing
-//// bool deleted; // index to delete
-//// char commitChange; // user input to commit changes
-////
-////switch (menuChoice) {
-////	case 'D':  //Display All		
-////		if (listingCount > 0)
-////			displayListings (housingList, listingCount);
-////		else 
-////			cout << "There are no records in the file." << endl;
-////		break;
-////	case 'A':  //Add a Listing		
-////		addListings (housingList, listingCount);
-////		break;
-////	case 'R': // Remove a Listing		
-////		displayMLS (housingList, listingCount);
-////		//cout << "Enter MLS Listing to delete: ";
-////		//cin >> mlsDelete;
-////		mlsDelete = MLSinput();
-////		deleteItem (mlsDelete, listingCount, housingList, deleted);
-////		if (deleted == false) //display error if not found
-////            cout << mlsDelete << " not found in list" << endl;
-////		else { // delete the listing            
-////            cout << "MLS Listing " << mlsDelete <<
-////                 " was deleted successfully" << endl;
-////			//displayListings (housingList, listingCount);
-////         } // end else
-////		break;
-////	case 'E': // Exit		
-////		cout << "Do you want to commit changes to file (Y/N)?: ";
-////		cin >> commitChange;
-////		commitChange = toupper (commitChange);
-////		if (commitChange == 'Y')
-////			writeListings(housingList, listingCount);
-////		quit = true;
-////		break;
-////} //end switch
-////
-////} // end of menuAction
-//
+// **************************************************************************
+// FUNCTION:     displayMenu 
+// DESCRIPTION:  Displays the menu choices
+// OUTPUT:       menuChoice - user input from the menu choices
+// **************************************************************************
+char displayMenu ()
+{
+//local variables
+char  menuChoice;
+
+	cout << "---------------------------------------" << endl;
+	cout << "LOCAL REALTOR'S ASSOCIATION DATABASE" << endl;
+	cout << "D - Display all Listings" << endl;
+	cout << "A - Add a Listings" << endl;
+	cout << "R - Remove a Listings" << endl;
+	cout << "C - Change asking price" << endl;
+	cout << "E - Exit the Program" << endl;
+	cout << "---------------------------------------" << endl << endl;
+	cout << "Choose an option from the menu: ";
+	cin >> menuChoice;
+	menuChoice = toupper (menuChoice); //uppercase user input
+return menuChoice;
+} // end of displayMenu
+
+// **************************************************************************
+// FUNCTION:     checkMenuChoice 
+// DESCRIPTION:  Validates user input menu choice re-prompting until correct
+// INPUT:        Parameter:  menuChoice -user input from menu choices
+// OUTPUT:       Parameter:  menuChoice  - validated menu choice
+// **************************************************************************
+char checkMenuChoice (char& menuChoice)
+{	
+ //loop until valid input 	
+	while( (menuChoice != 'D') && (menuChoice != 'A')
+		&& (menuChoice != 'R') && (menuChoice != 'E') && (menuChoice != 'C') ) {
+		if ( (menuChoice != 'D') && (menuChoice != 'A') && (menuChoice != 'R')
+				&& (menuChoice != 'E') && (menuChoice != 'C') )
+				cout << "Invalid Input- Please select D, A, R, C, or E" << endl;
+				menuChoice = displayMenu();
+	}    // end while 
+
+return menuChoice;
+} // end of checkMenuChoice
+
+
 ///*************************************************************************
 //  FUNCTION:	    loadExistingData
 //  DESCRIPTION:  attempts to open input file and if not able to creates it
@@ -791,3 +770,20 @@ string convertStatusToString (status currentStatus)
 // listTop = NULL;
 // return;
 //} // end of freeList
+
+/*************************************************************************
+  FUNCTION:	    showDescription
+  DESCRIPTION:  displays program description to screen
+  INPUT:		Parameters:	DESCRIPTION - description of what the program does
+
+*************************************************************************/
+void showDescription (string DESCRIPTION){
+    cout << endl;
+    cout << "------------------------------------------------------" << endl;
+    cout << DESCRIPTION << endl;
+    cout << "Developed by " << DEVELOPER << endl;
+    cout << "Class: " << CLASSNUM << endl;
+    cout << "Assn: " << ASSIGNMENT << endl;
+    cout << "------------------------------------------------------" << endl;
+    cout << endl << endl;
+} // end of showDescription
