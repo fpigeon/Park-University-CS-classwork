@@ -432,16 +432,11 @@ void addListings (houseNode* &first)
 			realtor = realtorInput ();
 			newNode->house.realtyCompany = realtor;					
 		    
-			newNode->next = NULL;
+			newNode->next = NULL;			
 			
-			if (first == NULL)
-				first = newNode;
-		  
-		    if (lastNode != NULL)	  
-				lastNode->next = newNode;        
-          
-		    lastNode = newNode;
-        
+			newNode->next = first;			
+		    first = newNode;
+
 			cout << endl;
 			do { //prompt for adding a new listing with error check
 				cout << "Would you like to enter another listing (Y/N)?: ";
@@ -454,6 +449,7 @@ void addListings (houseNode* &first)
               		
 return;
 } // end addListings
+
 
 ///*************************************************************************
 //  FUNCTION:	    deleteItem
