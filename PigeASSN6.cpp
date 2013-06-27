@@ -51,7 +51,8 @@ const int MAX_LISTINGS = 750, // maximum number of patients
           ZIP_MAX_LENGTH = 10, // 10 chars in the zip code ie 12345-7890
 	      MID_POINT = 5, // middle point in the zip code string
 		  REALTOR_MAX_LENGTH = 20, // max legnth for realtor string
-		  MAX_MAX = 999999; //max MLS and Price
+		  MAX_MAX = 999999, //max MLS and Price
+		  MIN_MLS = 100000; //min MLS NUM
 const int ERROR_1 = 1; // unique error message
 const int ERROR_2 = 2; // unique error message
 const int ERROR_3 = 3; // unique error message
@@ -62,7 +63,7 @@ struct  housingRec { //define structure
     double price; // double floating point number
     status currentStatus; // enumerated type for listing status
     string zip;  // 5+4 zip code
-    string realtyCompany; // up to 20 charaacters any combo of letters and spaces	
+    string realtyCompany; // up to 20 charaacters any combo of letters and spaces
 }; // end housingRec definition
 
 struct houseNode {
@@ -72,18 +73,18 @@ struct houseNode {
           
 //prototypes
 void showDescription (string DESCRIPTION);
-void readListings(housingRec housingList[], int& num);
-void loadExistingData (housingRec housingList[], int& listingCount);
+//void readListings(housingRec housingList[], int& num);
+//void loadExistingData (housingRec housingList[], int& listingCount);
 void displayListings (houseNode* housingList);
 void readListings (houseNode* &first);
 string convertStatusToString (status currentStatus);
 char checkMenuChoice (char& menuChoice);
 char displayMenu ();
-void menuAction (char menuChoice, houseNode* first, bool& quit);
-void addListings (housingRec housingList[], int& count);
-void displayMLS (housingRec housingList[], int count);
-void deleteItem (int itemToDel, int& listingCount, housingRec housingList[], bool& deleted);
-void writeListings(housingRec housingList[], int count);
+void menuAction (char menuChoice, houseNode* &first, bool& quit);
+void addListings (houseNode* &first);
+//void displayMLS (housingRec housingList[], int count);
+//void deleteItem (int itemToDel, int& listingCount, housingRec housingList[], bool& deleted);
+//void writeListings(housingRec housingList[], int count);
 int MLSinput ();
 double priceInput ();
 int statusInput () ;
@@ -99,20 +100,19 @@ string realtorInput ();
 int main()
 {
     //local variables		
-	houseNode* first = NULL; 
+	houseNode* first = NULL; //node for storing the linked list
 	
     //int listingCount;
-	char menuChoice;
-	bool quit = false;
+	char menuChoice; // user option from menu
+	bool quit = false; // flag to quit the program
 
-    showDescription (DESCRIPTION); 
-	readListings (first);		
-	do {
-		menuChoice = displayMenu ();
-		checkMenuChoice (menuChoice);	 		
-
-		menuAction (menuChoice, first, quit);
-	} while (quit == false);
+    showDescription (DESCRIPTION);  // display program description
+	readListings (first);		    // read from input file "LISTINGS.TXT"
+	do { //loop until exit is selected
+		menuChoice = displayMenu ();  //display the menu and accept input from the user
+		checkMenuChoice (menuChoice); //error check user input
+		menuAction (menuChoice, first, quit);  //action menu based on user decision
+	} while (quit == false); //quit when user selects exit
 	system ("PAUSE");
     return 0;
 }  // end main
@@ -127,7 +127,7 @@ int main()
   OUTPUT: 	    Parameters:	listingCount - count of listings in the array of records
 							quit - used to flag the end of the program
 *************************************************************************/
-void menuAction (char menuChoice, houseNode* first, bool& quit)
+void menuAction (char menuChoice, houseNode* &first, bool& quit)
 {
  int mlsDelete; //user input to delete an MLS Listing
  bool deleted; // index to delete
@@ -142,7 +142,7 @@ switch (menuChoice) {
 		break;
 	case 'A':  //Add a Listing
 		cout << "You chose option A - Add a listing" << endl;
-		//addListings (housingList, listingCount);
+		addListings (first);
 		break;
 	case 'R': // Remove a Listing
 		cout << "You chose option R - Remove a Listing" << endl;
@@ -386,54 +386,75 @@ return menuChoice;
 //	return;
 //} // end of function loadExistingData
 //
-///*************************************************************************
-//  FUNCTION:	    addListings
-//  DESCRIPTION:  adds new listing to the array of records
-//  INPUT:		Parameters:	housingList - array of records that stores listings
-//							count - count of listings in the array of records
-//  OUTPUT: 	    Parameters:	housingList - updated array of records that stores listings
-//							count - updated count of listings in the array of records												
-//*************************************************************************/
-//void addListings (housingRec housingList[], int& count)
-//{  		
-//	char newListing = ' ';
-//	int mls;
-//	double price;
-//	int temp;	
-//	string zip, realtor;
-//	
-//	while ( (count <= MAX_LISTINGS) && ( newListing != 'N' ) ) {            		
-//		mls = MLSinput ();
-//		housingList[count].mlsNum = mls;		
-//
-//		price = priceInput ();
-//		housingList[count].price = price;		
-//
-//		temp = statusInput ();
-//		housingList[count].currentStatus = static_cast <status> (temp);				
-//
-//		zip = zipInput ();
-//		housingList[count].zip = zip;
-//		cin.ignore();			
-//		
-//		realtor = realtorInput ();
-//		housingList[count].realtyCompany = realtor;				
-//		
-//		count++;  // increment listing count
-//
-//		cout << endl;
-//		do { //prompt for adding a new listing with error check
-//			cout << "Would you like to enter another listing (Y/N)?: ";
-//			cin >> newListing;
-//			newListing = toupper (newListing);
-//
-//		} while ( (newListing != 'Y') && (newListing != 'N') );
-//
-//	}  // end while		
-//		     
-//return;
-//} // end addListings
-//
+/*************************************************************************
+  FUNCTION:	    addListings
+  DESCRIPTION:  adds new listing to the array of records
+  INPUT:		Parameters:	housingList - array of records that stores listings
+							count - count of listings in the array of records
+  OUTPUT: 	    Parameters:	housingList - updated array of records that stores listings
+							count - updated count of listings in the array of records												
+*************************************************************************/
+void addListings (houseNode* &first)
+{  		
+	char pauseChar;           // to pause after memory allocation failure
+	char newListing = ' ';
+	int mls;
+	double price;
+	int temp;	
+	string zip, realtor;	
+	houseNode *newNode,	 // used to allocate memory for list
+			  *lastNode = NULL,       // points to last node in list
+			  *firstNode = NULL;
+	do  {
+		// create new node and store data read into it     
+		newNode = new (nothrow) houseNode;
+
+		if (newNode == NULL)  {
+           cout << "No more memory can be allocated!" << endl;
+		   cin >> pauseChar;
+           system("pause");
+        }
+
+		else {
+			mls = MLSinput ();		
+			newNode->house.mlsNum = mls;
+
+			price = priceInput ();		
+			newNode->house.price = price;
+
+			temp = statusInput ();		
+			newNode->house.currentStatus = static_cast<status>(temp);
+
+			zip = zipInput ();		
+			newNode->house.zip = zip;
+			cin.ignore();			
+		
+			realtor = realtorInput ();
+			newNode->house.realtyCompany = realtor;					
+		    
+			newNode->next = NULL;
+			
+			if (first == NULL)
+				first = newNode;
+		  
+		    if (lastNode != NULL)	  
+				lastNode->next = newNode;        
+          
+		    lastNode = newNode;
+        
+			cout << endl;
+			do { //prompt for adding a new listing with error check
+				cout << "Would you like to enter another listing (Y/N)?: ";
+				cin >> newListing;
+				newListing = toupper (newListing);
+
+			} while ( (newListing != 'Y') && (newListing != 'N') );
+		} // end else
+	} while ( (newNode != NULL) && ( newListing != 'N' ) );
+              		
+return;
+} // end addListings
+
 ///*************************************************************************
 //  FUNCTION:	    deleteItem
 //  DESCRIPTION:  Implementation of deleting an item from an ordered list
@@ -528,225 +549,225 @@ return menuChoice;
 //  return;
 //} // end of writeListings
 //
-///*************************************************************************
-//  FUNCTION:	    MLSinput
-//  DESCRIPTION:  validates MLS input from user and re-prompts until correct
-//  INPUT:		None
-//  OUTPUT:		mlsIn - validated MLS input
-//*************************************************************************/
-//int MLSinput ()
-//{
-//	int mlsIn;
-//	do
-//	{
-//		cout << "Enter MLS Number: (6 digit number): ";
-//		cin >> mlsIn;
-//
-//		if ( (mlsIn < 100000) || (mlsIn > MAX_MAX) ) 
-//			cout << "Invalid input.  Must be a six digit number." << endl;		
-//
-//	} while ( (mlsIn < 100000) || (mlsIn > MAX_MAX) );
-//	
-//	return 	mlsIn;
-//} // end of mlsinput
-//
-///*************************************************************************
-//  FUNCTION:	    priceInput
-//  DESCRIPTION:  validates proce input from user and re-prompts until correct
-//  INPUT:		None
-//  OUTPUT:		priceIn - validated price input
-//*************************************************************************/
-//double priceInput () 
-//{
-//	double priceIn;
-//	do {
-//		cout << "Enter asking price: ";
-//		cin >> priceIn;
-//		
-//		if ( (priceIn < 1) || (priceIn > MAX_MAX) ) 
-//			cout << "Invalid input.  Must be a positive amount." << endl;		
-//
-//	} while ( (priceIn < 1) || (priceIn > MAX_MAX) );
-//	
-//		return 	priceIn;
-//} // end of priceInput
-//
-///*************************************************************************
-//  FUNCTION:	    statusInput
-//  DESCRIPTION:  validates statis input from user and re-prompts until correct
-//  INPUT:		None
-//  OUTPUT:		temp - validated status input
-//*************************************************************************/
-//int statusInput () 
-//{
-//	int temp;
-//	do {
-//		cout << "Enter the status (0-Available, 1-Contract, or 2-Sold): ";
-//		cin >>  temp;
-//		
-//		if ( (temp < 0) || (temp > 2) ) 
-//			cout << "Invalid input.  Must be 0, 1, or 2." << endl;		
-//
-//	} while ( (temp < 0) || (temp > 2) );
-//	
-//	return 	temp;
-//} // end of statusInput
-//
-///*************************************************************************
-//  FUNCTION:	    zipInput
-//  DESCRIPTION:  validates zip code input from user and re-prompts until correct
-//  INPUT:		None
-//  OUTPUT:		zip - validated zip code
-//*************************************************************************/
-//string zipInput () 
-//{
-//	int boolNum,
-//		boolZipLength;
-//	string  zip;
-//	int location,
-//		cell;
-//	do {
-//		boolNum = 0;
-//		boolZipLength = 0;
-//		cout << "Enter the ZIP code (5digits-4digit): ";
-//		cin >>  zip;	
-//		
-//		//cout << "zip length is " << zip.length() << endl;
-//		if (zip.length() > ZIP_MAX_LENGTH)
-//			boolZipLength = ERROR_1; //over length
-//        else
-//			if (zip.length() < ZIP_MAX_LENGTH)
-//				boolZipLength = ERROR_2;  //under length
-//               
-//        if (boolZipLength == 0) {
-//			//check first five numbers of zip code
-//			for (cell = 0; cell < MID_POINT; cell++)
-//			{				   
-//				if ( !isdigit(zip[cell]) )
-//				boolNum = ERROR_1;    //true         
-//			} // end else
-//            
-//			if (boolZipLength == 0 && boolNum == 0){ 
-//				// Check for dash				
-//				location = zip.find("-"); //
-//				//cout << "location is " << location << endl;
-//				if (location != 5)
-//					boolNum = ERROR_2;
-//			} // end of find dash
-//
-//			if (boolZipLength == 0 && boolNum == 0){
-//			// check last 4 numbers
-//				for (cell = (MID_POINT+2); cell < ZIP_MAX_LENGTH; cell++){						   
-//				if ( !isdigit(zip[cell]) )
-//				boolNum = ERROR_3;    //true         
-//				} // end of for
-//			} // end of check last 4 numbers
-//
-//		}  //end of check numbers and dash
-//
-//
-//			
-//      // Display Error messages (if applicable)      	 
-//
-//		//display error
-//		if (boolZipLength == ERROR_1)
-//		{
-//			cout << "Zip code "<< zip << " is too long. " << endl;
-//			cout << "Must be 5 numbers then a dash (-) followed by 4 numbers.  Try again." << endl
-//				 << "i.e. 12345-7890" 
-//				 << endl << endl;
-//		}  //too long
-//		else
-//			if (boolZipLength == ERROR_2)
-//			{
-//				cout << "Zip code "<< zip << " is too short. " << endl;
-//				cout << "Must be 5 numbers then a dash (-) followed by 4 numbers.  Try again." << endl
-//				<< "i.e. 12345-7890"
-//				<< endl << endl;
-//			}  //too short
-//		else
-//			if (boolNum == ERROR_1)
-//			{
-//			   cout << "First 5 must be numbers." << endl;
-//			   cout << "Must be 5 numbers then a dash (-) followed by 4 numbers.  Try again." << endl
-//			   << "i.e. 12345-7890"
-//			   << endl << endl;
-//			}
-//		else
-//			if (boolNum == ERROR_2)
-//			{
-//			   cout << "There must be a dash seperating the numbers." << endl;
-//			   cout << "Must be 5 numbers then a dash (-) followed by 4 numbers.  Try again." << endl
-//			   << "i.e. 12345-7890"
-//			   << endl << endl;
-//			}
-//		else
-//			if (boolNum == ERROR_3)
-//			{
-//			   cout << "Last 4 must be numbers." << endl;
-//			   cout << "Must be 5 numbers then a dash (-) followed by 4 numbers.  Try again." << endl
-//			   << "i.e. 12345-7890"
-//			   << endl << endl;
-//			}
-//	} while ( (boolZipLength > 0) || (boolNum > 0 ));
-//	
-//	return 	zip;
-//} // end of zipInput
-//
-///*************************************************************************
-//  FUNCTION:	    realtorInput
-//  DESCRIPTION:  validates realtorinput from user and re-prompts until correct
-//  INPUT:		None
-//  OUTPUT:		realtor - validated realtor
-//*************************************************************************/
-//string realtorInput () 
-//{
-//int boolRealtorLength,
-//	boolAlpha,
-//	cell,
-//	realtorLength;
-//	string  realtor;
-//			
-//	do {
-//		boolRealtorLength = 0;
-//		boolAlpha = 0;
-//
-//		cout << "Enter the Realtor:  ";		
-//		getline (cin, realtor);
-//		
-//		realtorLength = realtor.length();
-//
-//		if (realtorLength > REALTOR_MAX_LENGTH)
-//			boolRealtorLength = ERROR_1; //over length				
-//               
-//        if (boolRealtorLength == 0) {
-//			//check for characters
-//			for (cell = 0; cell < realtorLength; cell++)
-//			{				   
-//				if ( !isalpha(realtor[cell]) )
-//				boolAlpha = ERROR_1;    //true         
-//			} // end else          									
-//		} //display error
-//		if (boolRealtorLength == ERROR_1)
-//		{
-//			cout << "Realtor Name is too long. " << endl;
-//			cout << "Must be under 20 characters.  Try again."		 
-//				 << endl << endl;
-//		}  //too long
-//		
-//		else
-//			if (boolAlpha == ERROR_1)
-//			{
-//			   cout << "Realtor Name must only contain alphabetic characters." << endl;
-//			   cout << "Try again."			   
-//			   << endl << endl;
-//			} // no non alphas
-//	
-//	} while ( (boolRealtorLength > 0) || (boolAlpha > 0 ));
-//	
-//	return 	realtor;
-//} // end of realtorInput
-//
+/*************************************************************************
+  FUNCTION:	    MLSinput
+  DESCRIPTION:  validates MLS input from user and re-prompts until correct
+  INPUT:		None
+  OUTPUT:		mlsIn - validated MLS input
+*************************************************************************/
+int MLSinput ()
+{
+	int mlsIn;
+	do
+	{
+		cout << "Enter MLS Number: (6 digit number): ";
+		cin >> mlsIn;
+
+		if ( (mlsIn < MIN_MLS) || (mlsIn > MAX_MAX) ) 
+			cout << "Invalid input.  Must be a six digit number." << endl;		
+
+	} while ( (mlsIn < MIN_MLS) || (mlsIn > MAX_MAX) );
+	
+	return 	mlsIn;
+} // end of mlsinput
+
+/*************************************************************************
+  FUNCTION:	    priceInput
+  DESCRIPTION:  validates proce input from user and re-prompts until correct
+  INPUT:		None
+  OUTPUT:		priceIn - validated price input
+*************************************************************************/
+double priceInput () 
+{
+	double priceIn;
+	do {
+		cout << "Enter asking price: ";
+		cin >> priceIn;
+		
+		if ( (priceIn < 1) || (priceIn > MAX_MAX) ) 
+			cout << "Invalid input.  Must be a positive amount." << endl;		
+
+	} while ( (priceIn < 1) || (priceIn > MAX_MAX) );
+	
+		return 	priceIn;
+} // end of priceInput
+
+/*************************************************************************
+  FUNCTION:	    statusInput
+  DESCRIPTION:  validates statis input from user and re-prompts until correct
+  INPUT:		None
+  OUTPUT:		temp - validated status input
+*************************************************************************/
+int statusInput () 
+{
+	int temp;
+	do {
+		cout << "Enter the status (0-Available, 1-Contract, or 2-Sold): ";
+		cin >>  temp;
+		
+		if ( (temp < 0) || (temp > 2) ) 
+			cout << "Invalid input.  Must be 0, 1, or 2." << endl;		
+
+	} while ( (temp < 0) || (temp > 2) );
+	
+	return 	temp;
+} // end of statusInput
+
+/*************************************************************************
+  FUNCTION:	    zipInput
+  DESCRIPTION:  validates zip code input from user and re-prompts until correct
+  INPUT:		None
+  OUTPUT:		zip - validated zip code
+*************************************************************************/
+string zipInput () 
+{
+	int boolNum,
+		boolZipLength;
+	string  zip;
+	int location,
+		cell;
+	do {
+		boolNum = 0;
+		boolZipLength = 0;
+		cout << "Enter the ZIP code (5digits-4digit): ";
+		cin >>  zip;	
+		
+		//cout << "zip length is " << zip.length() << endl;
+		if (zip.length() > ZIP_MAX_LENGTH)
+			boolZipLength = ERROR_1; //over length
+        else
+			if (zip.length() < ZIP_MAX_LENGTH)
+				boolZipLength = ERROR_2;  //under length
+               
+        if (boolZipLength == 0) {
+			//check first five numbers of zip code
+			for (cell = 0; cell < MID_POINT; cell++)
+			{				   
+				if ( !isdigit(zip[cell]) )
+				boolNum = ERROR_1;    //true         
+			} // end else
+            
+			if (boolZipLength == 0 && boolNum == 0){ 
+				// Check for dash				
+				location = zip.find("-"); //
+				//cout << "location is " << location << endl;
+				if (location != 5)
+					boolNum = ERROR_2;
+			} // end of find dash
+
+			if (boolZipLength == 0 && boolNum == 0){
+			// check last 4 numbers
+				for (cell = (MID_POINT+2); cell < ZIP_MAX_LENGTH; cell++){						   
+				if ( !isdigit(zip[cell]) )
+				boolNum = ERROR_3;    //true         
+				} // end of for
+			} // end of check last 4 numbers
+
+		}  //end of check numbers and dash
+
+
+			
+      // Display Error messages (if applicable)      	 
+
+		//display error
+		if (boolZipLength == ERROR_1)
+		{
+			cout << "Zip code "<< zip << " is too long. " << endl;
+			cout << "Must be 5 numbers then a dash (-) followed by 4 numbers.  Try again." << endl
+				 << "i.e. 12345-7890" 
+				 << endl << endl;
+		}  //too long
+		else
+			if (boolZipLength == ERROR_2)
+			{
+				cout << "Zip code "<< zip << " is too short. " << endl;
+				cout << "Must be 5 numbers then a dash (-) followed by 4 numbers.  Try again." << endl
+				<< "i.e. 12345-7890"
+				<< endl << endl;
+			}  //too short
+		else
+			if (boolNum == ERROR_1)
+			{
+			   cout << "First 5 must be numbers." << endl;
+			   cout << "Must be 5 numbers then a dash (-) followed by 4 numbers.  Try again." << endl
+			   << "i.e. 12345-7890"
+			   << endl << endl;
+			}
+		else
+			if (boolNum == ERROR_2)
+			{
+			   cout << "There must be a dash seperating the numbers." << endl;
+			   cout << "Must be 5 numbers then a dash (-) followed by 4 numbers.  Try again." << endl
+			   << "i.e. 12345-7890"
+			   << endl << endl;
+			}
+		else
+			if (boolNum == ERROR_3)
+			{
+			   cout << "Last 4 must be numbers." << endl;
+			   cout << "Must be 5 numbers then a dash (-) followed by 4 numbers.  Try again." << endl
+			   << "i.e. 12345-7890"
+			   << endl << endl;
+			}
+	} while ( (boolZipLength > 0) || (boolNum > 0 ));
+	
+	return 	zip;
+} // end of zipInput
+
+/*************************************************************************
+  FUNCTION:	    realtorInput
+  DESCRIPTION:  validates realtorinput from user and re-prompts until correct
+  INPUT:		None
+  OUTPUT:		realtor - validated realtor
+*************************************************************************/
+string realtorInput () 
+{
+int boolRealtorLength,
+	boolAlpha,
+	cell,
+	realtorLength;
+	string  realtor;
+			
+	do {
+		boolRealtorLength = 0;
+		boolAlpha = 0;
+
+		cout << "Enter the Realtor:  ";		
+		getline (cin, realtor);
+		
+		realtorLength = realtor.length();
+
+		if (realtorLength > REALTOR_MAX_LENGTH)
+			boolRealtorLength = ERROR_1; //over length				
+               
+        if (boolRealtorLength == 0) {
+			//check for characters
+			for (cell = 0; cell < realtorLength; cell++)
+			{				   
+				if ( !isalpha(realtor[cell]) )
+				boolAlpha = ERROR_1;    //true         
+			} // end else          									
+		} //display error
+		if (boolRealtorLength == ERROR_1)
+		{
+			cout << "Realtor Name is too long. " << endl;
+			cout << "Must be under 20 characters.  Try again."		 
+				 << endl << endl;
+		}  //too long
+		
+		else
+			if (boolAlpha == ERROR_1)
+			{
+			   cout << "Realtor Name must only contain alphabetic characters." << endl;
+			   cout << "Try again."			   
+			   << endl << endl;
+			} // no non alphas
+	
+	} while ( (boolRealtorLength > 0) || (boolAlpha > 0 ));
+	
+	return 	realtor;
+} // end of realtorInput
+
 ///*************************************************************************
 //  FUNCTION:	    freeList
 //  DESCRIPTION:  deallocates memory 
