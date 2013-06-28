@@ -82,7 +82,7 @@ char checkMenuChoice (char& menuChoice);
 char displayMenu ();
 void menuAction (char menuChoice, houseNode* &first, bool& quit);
 void addListings (houseNode* &first);
-//void displayMLS (housingRec housingList[], int count);
+void displayMLS (houseNode* first);
 //void deleteItem (int itemToDel, int& listingCount, housingRec housingList[], bool& deleted);
 //void writeListings(housingRec housingList[], int count);
 int MLSinput ();
@@ -145,9 +145,9 @@ switch (menuChoice) {
 		addListings (first);
 		break;
 	case 'R': // Remove a Listing
-		cout << "You chose option R - Remove a Listing" << endl;
-		//displayMLS (housingList, listingCount);		
-		//mlsDelete = MLSinput();
+		cout << "You chose option R - Remove a Listing" << endl;		
+		displayMLS (first);
+		mlsDelete = MLSinput();
 		//deleteItem (mlsDelete, listingCount, housingList, deleted);
 		//if (deleted == false) //display error if not found
   //          cout << mlsDelete << " not found in list" << endl;
@@ -263,7 +263,7 @@ void displayListings (houseNode* first)
 	 cout << "------  -------  ---------  ----------  -------------------" << endl;
 
      while (tempPtr != NULL)
-	 {
+	{
         cout << right  << tempPtr->house.mlsNum
 		     << setw(9) << tempPtr->house.price << "  "
 		     << left << setw(11) << convertStatusToString (tempPtr->house.currentStatus)
@@ -272,7 +272,7 @@ void displayListings (houseNode* first)
 
       //cout << endl;
       tempPtr = tempPtr->next;
-  }   // end while
+	}   // end while
 
 
 	 
@@ -496,31 +496,37 @@ return;
 //  return;
 //} //end of deleteItem
 //
-///*************************************************************************
-//  FUNCTION:	    displayMLS
-//  DESCRIPTION:  displays all MLS records from array of record
-//  INPUT:		Parameters:	housingList - array of records that stores listings
-//							count - array of records that stores listings							
-//*************************************************************************/
-//void displayMLS (housingRec housingList[], int count)
-//{
-// int newLine = 0; //for add a new line
-//	 cout << endl; 
-//	 cout << "These are the MLS Listings stored on file:" << endl;
-//	 cout << "--------------------------------------------------" << endl;
-//
-//	 for (int num = 0; num < count; num++) {
-//		  cout << right << housingList[num].mlsNum << setw(8);
-//		  newLine++;
-//		  if (newLine == 6) { // add a new line after displaying 6 listings
-//				cout << endl;
-//				newLine = 0;
-//		  }
-//	 }   // end for
-//	 cout << endl;  
-//	 return;
-//} // end displayMLS
-//
+/*************************************************************************
+  FUNCTION:	    displayMLS
+  DESCRIPTION:  displays all MLS records from array of record
+  INPUT:		Parameters:	housingList - array of records that stores listings
+							count - array of records that stores listings							
+*************************************************************************/
+void displayMLS (houseNode* first)
+{
+
+ houseNode* tempPtr = first;
+ int newLine = 1; //for add a new line
+	 cout << endl; 
+	 cout << "These are the MLS Listings stored on file:" << endl;
+	 cout << "--------------------------------------------------" << endl;
+
+	 while (tempPtr != NULL) {
+		  cout << setw(7) << tempPtr->house.mlsNum;
+		  if (newLine == 6) { // add a new line after displaying 6 listings
+				cout << endl;
+				newLine = 1;
+		  }
+		  else				
+		  //increment counters
+			newLine++;
+		  tempPtr = tempPtr->next;
+	 }   // end while
+	 cout << endl; 
+
+	 return;
+} // end displayMLS
+
 ///*************************************************************************
 //  FUNCTION:	    writeListings
 //  DESCRIPTION:  outputs array of records to output file
