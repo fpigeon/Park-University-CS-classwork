@@ -83,7 +83,7 @@ char displayMenu ();
 void menuAction (char menuChoice, houseNode* &first, bool& quit);
 void addListings (houseNode* &first);
 void displayMLS (houseNode* first);
-//void deleteItem (int itemToDel, int& listingCount, housingRec housingList[], bool& deleted);
+void deleteItem (houseNode* &first, int delName, bool& success);
 //void writeListings(housingRec housingList[], int count);
 int MLSinput ();
 double priceInput ();
@@ -146,15 +146,16 @@ switch (menuChoice) {
 		break;
 	case 'R': // Remove a Listing
 		cout << "You chose option R - Remove a Listing" << endl;		
-		displayMLS (first);
-		mlsDelete = MLSinput();
+		displayMLS (first); //display the MLS options from the list
+		mlsDelete = MLSinput(); //error check input
 		//deleteItem (mlsDelete, listingCount, housingList, deleted);
-		//if (deleted == false) //display error if not found
-  //          cout << mlsDelete << " not found in list" << endl;
-		//else { // delete the listing            
-  //          cout << "MLS Listing " << mlsDelete <<
-  //               " was deleted successfully" << endl;			
-  //       } // end else
+		deleteItem (first, mlsDelete, deleted); //delete node from the list
+		if (deleted == false) //display error if not found
+            cout << mlsDelete << " not found in list" << endl;
+		else { // delete the listing            
+            cout << "MLS Listing " << mlsDelete <<
+                 " was deleted successfully" << endl;			
+        } // end else
 		break;
 	case 'C':  //Add a Listing		
 		cout << "You chose option C - Change asking price" << endl;
@@ -451,51 +452,61 @@ return;
 } // end addListings
 
 
-///*************************************************************************
-//  FUNCTION:	    deleteItem
-//  DESCRIPTION:  Implementation of deleting an item from an ordered list
-//  INPUT:		Parameters:	itemToDel - listing to delete from the array of records
-//							listingCount - array of records that stores listings
-//							housingList - array of records that stores listings
-//							deleted - flags to whther record was deleted or not							
-//  OUTPUT: 	    Parameters:	housingList - updated array of records that stores listings
-//							listingCount - array of records that stores listings
-//							deleted - flags to whther record was deleted or not	
-//*************************************************************************/
+/*************************************************************************
+  FUNCTION:	    deleteItem
+  DESCRIPTION:  Implementation of deleting an item from an ordered list
+  INPUT:		Parameters:	itemToDel - listing to delete from the array of records
+							listingCount - array of records that stores listings
+							housingList - array of records that stores listings
+							deleted - flags to whther record was deleted or not							
+  OUTPUT: 	    Parameters:	housingList - updated array of records that stores listings
+							listingCount - array of records that stores listings
+							deleted - flags to whther record was deleted or not	
+*************************************************************************/
 //void deleteItem (int itemToDel, int& listingCount, housingRec housingList[], bool& deleted)
-//{  
-//  int placeFound;               // index where found
-//
-//  deleted = false;              // item not found and deleted yet
-//      
-//  // Find where itemToDel is in list
-//  placeFound = 0;                             // Start search at first index
-//  
-//  while ((placeFound < listingCount) &&           // While still values to search
-//         (housingList[placeFound].mlsNum != itemToDel))     // and value not found
-//            placeFound++;                        // increment index
-// 
-//  //If itemToDel was Found, delete it
-//  if (placeFound < listingCount) {                
-//     //cout << "place found is " << placeFound << endl;
-//	 //cout << "listingcount is " << listingCount << endl;
-//     //copy the record in the last occuppied index location within the array over the record
-//	 
-//     //housingList[placeFound] = housingList[listingCount - 1];	 	 
-//	 //cout << "MLS of placefound is now " << housingList[placeFound].mlsNum << endl;
-//     for (int num = placeFound + 1; num < listingCount; num++)
-//     housingList[num - 1] = housingList[num];     // Decrement list size
-//     listingCount--;
-//
-//     // Zero out deleted last item
-//     //housingList[listingCount] = 0;	// Optional
-//
-//     deleted = true;       
-//  }  // end if
-//  //cout << "listingcount out of loop is " << listingCount << endl;  
-//  return;
-//} //end of deleteItem
-//
+//****************************************************************************
+// Delete the node from the linked list whose name field matches the delName
+// passed in.  Set value of success to true for success, false for failure.
+//****************************************************************************
+//void deleteNode (student* &listTop, string delName, bool& success)
+void deleteItem (houseNode* &first, int delName, bool& success)
+{        
+  houseNode *here,                           // Node being checked
+            *prev;                           // Node prior to node being checked
+
+  success = false;                         // Name not found yet
+
+  if ( first->house.mlsNum == delName ) {        // If delName found in first node,
+         here = first;
+         first = first->next;		      //  Delete top item
+         delete here;
+         success = true;
+  }
+  
+  else {                                   // Not top item, so search...
+
+         prev = first;                      // Initialize prev and here to 
+         here = first->next;                // first 2 nodes in list
+
+         // Look for delName (while not end of list and name doesn't match)
+         while ( (here != NULL) && (here->house.mlsNum != delName) ) {   
+             	prev = here;               // move prev down one
+              	here = here->next;         // move here down one
+       	 }
+
+         if (here != NULL) {               // If found, delete item from list
+                prev->next = here->next;
+                delete here;
+                success = true;
+         }
+         else                              // Otherwise, give error message
+                cout << delName << " not found in list." << endl;
+
+  }	// End else (not top Item)
+
+  return; 
+} //end of deleteItem
+
 /*************************************************************************
   FUNCTION:	    displayMLS
   DESCRIPTION:  displays all MLS records from array of record
