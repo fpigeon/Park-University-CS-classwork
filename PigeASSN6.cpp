@@ -84,7 +84,7 @@ void menuAction (char menuChoice, houseNode* &first, bool& quit);
 void addListings (houseNode* &first);
 void displayMLS (houseNode* first);
 void deleteItem (houseNode* &first, int delName, bool& success);
-//void writeListings(housingRec housingList[], int count);
+void writeListings(houseNode* first);
 int MLSinput ();
 double priceInput ();
 int statusInput () ;
@@ -148,7 +148,6 @@ switch (menuChoice) {
 		cout << "You chose option R - Remove a Listing" << endl;		
 		displayMLS (first); //display the MLS options from the list
 		mlsDelete = MLSinput(); //error check input
-		//deleteItem (mlsDelete, listingCount, housingList, deleted);
 		deleteItem (first, mlsDelete, deleted); //delete node from the list
 		if (deleted == false) //display error if not found
             cout << mlsDelete << " not found in list" << endl;
@@ -164,8 +163,9 @@ switch (menuChoice) {
 		cout << "Do you want to commit changes to file (Y/N)?: ";
 		cin >> commitChange;
 		commitChange = toupper (commitChange);
-		//if (commitChange == 'Y')
-			//writeListings(housingList, listingCount);
+		if (commitChange == 'Y')
+		//writeListings(housingList, listingCount);
+		writeListings(first);
 		quit = true;
 		break;
 } //end switch
@@ -254,8 +254,7 @@ void readListings (houseNode* &first)
 							num - count of listings in the array of records
 *************************************************************************/
 void displayListings (houseNode* first)
-{
-  //  int idx;
+{  
   houseNode* tempPtr = first;
 
 	 cout << endl;	 
@@ -265,18 +264,15 @@ void displayListings (houseNode* first)
 
      while (tempPtr != NULL)
 	{
-        cout << right  << tempPtr->house.mlsNum
+		cout << right  << tempPtr->house.mlsNum
 		     << setw(9) << tempPtr->house.price << "  "
 		     << left << setw(11) << convertStatusToString (tempPtr->house.currentStatus)
 		     << right << setw(10) << tempPtr->house.zip 
 		     << left << " " << tempPtr->house.realtyCompany << endl;	     
-
-      //cout << endl;
-      tempPtr = tempPtr->next;
+      
+        tempPtr = tempPtr->next;
 	}   // end while
-
-
-	 
+	 	 
 	 return;
 } // end displayListings
 
@@ -538,30 +534,73 @@ void displayMLS (houseNode* first)
 	 return;
 } // end displayMLS
 
-///*************************************************************************
-//  FUNCTION:	    writeListings
-//  DESCRIPTION:  outputs array of records to output file
-//  INPUT:		Parameters:	housingList - array of records that stores listings
-//							count - array of records that stores listings
-//  OUTPUT:		File : Writes to output file
-//*************************************************************************/
-//void writeListings(housingRec housingList[], int count)
-//{
-////local variables  
-//  ofstream outData;         // input file stream  
-//  outData.open (LISTINGS_FILENAME.c_str() );
-//  
-//  for (int num = 0; num < count; num++) {
-//      outData << right << housingList[num].mlsNum 
-//       << setw(7) << housingList[num].price  
-//       << setw(2) << housingList[num].currentStatus
-//       << setw(11) << housingList[num].zip
-//       << left  << " " << housingList[num].realtyCompany << endl;			
-//  }   // end for     
-//  outData.close();
-//  return;
-//} // end of writeListings
-//
+/*************************************************************************
+  FUNCTION:	    writeListings
+  DESCRIPTION:  outputs array of records to output file
+  INPUT:		Parameters:	housingList - array of records that stores listings
+							count - array of records that stores listings
+  OUTPUT:		File : Writes to output file
+*************************************************************************/
+void writeListings(houseNode* first)
+{
+//local variables
+  bool fileGood = false;
+  char overWrite;
+  string filename; //wher eth user wants to save th file
+  ofstream outData;         // output file stream  
+  //outData.open (LISTINGS_FILENAME.c_str() );
+  houseNode* tempPtr = first;
+
+  //promt user for file name
+ 
+  do {
+	  cout << endl << "Enter data filename: ";
+	  cin >> filename;
+	  filename = filename + ".txt";
+	  
+	  outData.open (filename.c_str(), ios_base::out | ios_base::in);  // will not create file)
+	  
+	  if (outData.good()) {
+		cout << "Warning, file already exists, proceed? ";
+		cin >>overWrite;
+		  overWrite = toupper (overWrite);
+		  if (overWrite = 'N')
+			  outData.close();
+		  else {
+			fileGood = true;
+			outData.open (filename.c_str() );
+			while (tempPtr != NULL) {
+				   outData << right <<  tempPtr->house.mlsNum
+				   << setw(7) << tempPtr->house.price 
+				   << setw(2) <<  tempPtr->house.currentStatus
+				   << setw(11) << tempPtr->house.zip 
+				   << left  << " " << tempPtr->house.realtyCompany << endl;
+		   
+				   tempPtr = tempPtr->next;
+			  } //end of overwire
+			  outData.close();
+		  } //end else
+      } //end if file exists 
+  } while (fileGood != false);
+
+  if (fileGood == false){
+	  outData.open (filename.c_str() );
+	  while (tempPtr != NULL) {
+		outData << right <<  tempPtr->house.mlsNum
+		<< setw(7) << tempPtr->house.price 
+		<< setw(2) <<  tempPtr->house.currentStatus
+		<< setw(11) << tempPtr->house.zip 
+		<< left  << " " << tempPtr->house.realtyCompany << endl;
+		   
+		tempPtr = tempPtr->next;
+	  } //end of overwire
+	  outData.close();
+   }
+    
+  return;
+} // end of writeListings
+
+
 /*************************************************************************
   FUNCTION:	    MLSinput
   DESCRIPTION:  validates MLS input from user and re-prompts until correct
