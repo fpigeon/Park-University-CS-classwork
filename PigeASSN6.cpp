@@ -3,29 +3,29 @@ Author: Frank Pigeon
 Class: CS362
 Assignment: Week 8
 Program helps keep track of the realtor's association homes for sale.
-Processing: Uses array of records to store housing listings.
+Processing: Uses linked lists to store housing listings.
 Output: Outputs the records in the file to screen and at the end asks
 user if they want to commit changes to LISTINGS.txt
-FUNCTIONS:	 main - calls other functions and initializes array of records
+FUNCTIONS:	 main - calls other functions and initializes linked list
 			 showDescription - displays program description to screen
-			 readListings - reads input file and stores them in the array of records
-             loadExistingData - prompts user if they want to load existing data from
-			    the input file or start a new
-			 displayListings - displays to screen contents of the array of records
+			 readListings - reads input file and stores them in the linked list             
+			 displayListings - displays to screen contents of the linked list
 			 convertStatusToString - works with the enumerated type for status
 			 checkMenuChoice - validates menu choice
 			 displayMenu - displays menu choices to the screen
 			 menuAction - calls other functions based on menu choice
-			 addListings - add new listings to the array of records
+			 addListings - add new listings to the linked list
 			 displayMLS - displays to screen all MLS fields for user to select one
 			    to delete
-			deleteItem - removes a record from the array of records
-			writeListings - outputs array of records to output file
+			deleteItem - removes a record from the linked list
+			writeListings - outputs linked list to output file
 			MLSinput - promt, read, and validate MLS input
 			priceInput - promt, read, and validate price input
 			statusInput - promt, read, and validate status input
 			zipInput - promt, read, and validate zip code input
 			realtorInput - promt, read, and validate realtor input
+			freeList - frees memory heap from linked list
+			changeMLS - changes the price of the MLS listings
 ------------------------------------------------------------------------------*/
 
 //Header File
@@ -45,11 +45,9 @@ const string DESCRIPTION = "This program keeps track of homes for sale in the ar
              DEVELOPER = "Frank Pigeon",
              CLASSNUM = "CS362",
              ASSIGNMENT = "Week 7";
-const string LISTINGS_FILENAME = "LISTINGS.TXT";  //input file 
 const string CHANGES_FILENAME = "CHANGES.TXT";  //input file 
 enum status {AVAILABLE, CONTRACT, SOLD}; // listing status options
-const int MAX_LISTINGS = 750, // maximum number of patients
-          ZIP_MAX_LENGTH = 10, // 10 chars in the zip code ie 12345-7890
+const int ZIP_MAX_LENGTH = 10, // 10 chars in the zip code ie 12345-7890
 	      MID_POINT = 5, // middle point in the zip code string
 		  REALTOR_MAX_LENGTH = 20, // max legnth for realtor string
 		  MAX_MAX = 999999, //max MLS and Price
@@ -70,15 +68,13 @@ struct  housingRec { //define structure
     string realtyCompany; // up to 20 charaacters any combo of letters and spaces
 }; // end housingRec definition
 
-struct houseNode {
+struct houseNode { //pointers for the linked list
     housingRec house;	
     houseNode* next;
-};  // end patientNode
+};  // end houseNode
           
 //prototypes
 void showDescription (string DESCRIPTION);
-//void readListings(housingRec housingList[], int& num);
-//void loadExistingData (housingRec housingList[], int& listingCount);
 void displayListings (houseNode* housingList);
 void readListings (houseNode* &first);
 string convertStatusToString (status currentStatus);
@@ -99,9 +95,10 @@ void changeMLS (houseNode* &first, bool& emptyRecord);
 
 /******************************************************************************
 //  FUNCTION:	  main
-//  DESCRIPTION:  Calls other functions and intializes array of records
-//  INPUT: File:  Reads the LISTINGS.TXT if user desires
-//  CALLS TO:	  showDescription, loadExistingData, displayMenu, checkMenuChoice, menuAction
+//  DESCRIPTION:  Calls other functions and intializes linked list
+//  INPUT: File:  Reads the user inputed text file
+//  CALLS TO:	  showDescription, readListings, displayMenu, checkMenuChoice
+				  menuAction
 ******************************************************************************/
 int main()
 {
@@ -126,12 +123,18 @@ int main()
 /*************************************************************************
   FUNCTION:	    menuAction
   DESCRIPTION:  calls functions based on user selected menu choice
-  INPUT:		Parameters:	menuChoice -user input from menu choices
-							housingList - array of records that stores listings
-							listingCount - count of listings in the array of records
-							quit - used to flag the end of the program
-  OUTPUT: 	    Parameters:	listingCount - count of listings in the array of records
-							quit - used to flag the end of the program
+  INPUT:		
+     Parameters:	menuChoice -user input from menu choices							
+					first - linked list contians MLS listing data
+					quit - used to flag the end of the program
+	 File: None
+  OUTPUT:
+	 Return Val: void
+     Parameters:	first - linked list contians MLS listing data
+					quit - used to flag the end of the program
+	 File: None
+  CALLS TO:	displayListings, addListings, displayMLS, deleteItem, changeMLS,
+			writeListings, freeList
 *************************************************************************/
 void menuAction (char menuChoice, houseNode* &first, bool& quit)
 {
@@ -142,17 +145,15 @@ void menuAction (char menuChoice, houseNode* &first, bool& quit)
 
 switch (menuChoice) {
 	case 'D':  //Display All
-		if (first != NULL)
-			displayListings (first);		
-		else 
+		if (first != NULL) // if there is data
+			displayListings (first);  //show all listings to screen
+		else  // no data
 			cout << "There are no records in the file." << endl;
 		break;
-	case 'A':  //Add a Listing
-		cout << "You chose option A - Add a listing" << endl;
-		addListings (first);
+	case 'A':  //Add a Listing		
+		addListings (first); //attempt to add a listing to the linked list
 		break;
-	case 'R': // Remove a Listing
-		cout << "You chose option R - Remove a Listing" << endl;
+	case 'R': // Remove a Listing		
 		displayMLS (first, emptyRecord); //display avail MLS num
 		if (emptyRecord == true) //no data
 			cout << "Error - There is no records in the file" << endl;
@@ -167,8 +168,7 @@ switch (menuChoice) {
 			} // end else
 		} //end else data in file
 		break;
-	case 'C':  //Add a Listing		
-		cout << "You chose option C - Change asking price" << endl;
+	case 'C':  //Add a Listing				
 		changeMLS (first, emptyRecord);
 		if (emptyRecord == true) //no data
 			cout << "Error - There is no records in the file" << endl;
@@ -180,49 +180,69 @@ switch (menuChoice) {
 		if (commitChange == 'Y')
 			writeListings(first);		
 		quit = true;
-		freeList (first);
+		freeList (first); //free heap memory from linked list
 		break;
 } //end switch
 
 } // end of menuAction
 
+
 /*************************************************************************
   FUNCTION:	    readListings
   DESCRIPTION:  attempts to load existing data from input file
-  INPUT:		Parameters:	housingList - array of records that stores listings
-							num - count of listings in the array of records
-  OUTPUT: 	    Parameters:	housingList - array of records that stores listings
-							num - count of listings in the array of records
+  INPUT:		
+     Parameters:	first - linked list contians MLS listing data
+					
+	 File: inFile input stream from user generated input file
+  OUTPUT:
+	 Return Val: void
+     Parameters:	first - linked list contians MLS listing data					
+	 File: None
+  CALLS TO:	none
 *************************************************************************/
 void readListings (houseNode* &first)
 {
-//local variables
+//local variables  
+  bool userMenu = false; //flag for goint to the action menu
   ifstream inFile; // input file stream
-  int temp;
-       
-
+  int temp; //temp for reading data from input file
+  char loadExisting; //input reponse from user to load existing data
+  string filename, //user generated file name
+	  errorChoice;  //user choice if there was an error
   houseNode *newNode,				// used to allocate memory for list
 			*lastNode = NULL;       // points to last node in list
-  
-  inFile.open (LISTINGS_FILENAME.c_str() );    
-   
 
-  // if file doesn't open present error and ask user if they
-  // wish to exit or start with no data    
-  if (!inFile)
-  { 
-        
-      cout << "Error opening data file" << endl << endl;
-      system("pause");
-   // } while ( (errorChoice == 'Q') && (errorChoice == 'C') );
-	
-  } // end if no file 
-  else
-  {  // file opened successfully 
-	  // while read of one record is successful	 
-	 inFile >> temp; 
-	 while( inFile)
-	 {	 
+  //promtpt to usae existing data
+  do {
+      cout << "Load exisiting data from a file (Y/N)? ";
+      cin >> loadExisting;
+      loadExisting = toupper (loadExisting);
+  } while ( (loadExisting != 'Y') && (loadExisting != 'N') ); 
+  
+  if (loadExisting == 'Y') {    
+	cout << endl << "Enter data filename: ";
+	cin >> filename;
+	filename = filename + ".TXT";
+	inFile.open (filename.c_str() );
+	if (!inFile) {  //file does not exist	 			 
+		do { //until we have good file name or go to menu
+			inFile.clear();  //clear file stream before trying another file			
+			cout << "Error opening data file" << endl << endl;
+			cout << "Enter another filename " << endl;
+			cout << "or enter M for Menu:  ";
+			cin >> errorChoice;
+			if ( (errorChoice == "M") || (errorChoice == "m") )
+				userMenu = true;
+			else { 				
+				errorChoice = errorChoice + ".TXT";
+				inFile.open (errorChoice.c_str() );		
+			} //end else
+		} while ( (!inFile) || (userMenu == false) );
+	} // end if no file 
+	else{ //file opens and read data
+		inFile >> temp; 
+		while( inFile)
+		{	 
 
         // create new node and store data read into it     
         newNode = new (nothrow) houseNode;
@@ -244,28 +264,36 @@ void readListings (houseNode* &first)
         
           if (first == NULL)
 		    first = newNode;
-		  
+
 		  if (lastNode != NULL)	  
             lastNode->next = newNode;        
           
 		  lastNode = newNode;
 		}
         
-		inFile >> temp;        
-     }
-  }     // end while
-        
-  inFile.close();   
-    
+			inFile >> temp;        		
+		}     // end while
+		inFile.close();   	
+	} //end file opens and read data
+
+  } //end of load existing
+  else 
+	cout <<  "return to menu" << endl;	//go to menu          
+return;    
 } // end of readListings
 
 /*************************************************************************
   FUNCTION:	    displayListings
   DESCRIPTION:  Displays data for all listings, one record per line
-  INPUT:		Parameters:	housingList - array of records that stores listings
-							num - count of listings in the array of records
-  OUTPUT: 	    Parameters:	housingList - array of records that stores listings
-							num - count of listings in the array of records
+  INPUT:		
+     Parameters:	first - linked list contians MLS listing data
+					
+	 File: None
+  OUTPUT:
+	 Return Val: void
+     Parameters:	first - linked list contians MLS listing data					
+	 File: None
+  CALLS TO:	none
 *************************************************************************/
 void displayListings (houseNode* first)
 {  
@@ -290,12 +318,18 @@ void displayListings (houseNode* first)
 	 return;
 } // end displayListings
 
-// **************************************************************************
-// FUNCTION:     convertStatusToString 
-// DESCRIPTION:  turn enum data into string for output purposes
-// INPUT:        Parameter:  currentStatus - enum data type for listing status
-// OUTPUT:       Parameter:  statusString  - converted enum type to string
-// **************************************************************************
+/*************************************************************************
+  FUNCTION:	    convertStatusToString
+  DESCRIPTION:  turn enum data into string for output purposes
+  INPUT:		
+     Parameters:	currentStatus - enum data type for listing status
+	 File: None
+  OUTPUT:
+	 Return Val: string
+     Parameters:	statusString  - converted enum type to string
+	 File: None
+  CALLS TO:	none
+*************************************************************************/
 string convertStatusToString (status currentStatus)
 {
 	string statusString;
@@ -310,11 +344,19 @@ string convertStatusToString (status currentStatus)
 	return statusString;
 } // end of convertStatusToString
 
-// **************************************************************************
-// FUNCTION:     displayMenu 
-// DESCRIPTION:  Displays the menu choices
-// OUTPUT:       menuChoice - user input from the menu choices
-// **************************************************************************
+
+/*************************************************************************
+  FUNCTION:	    displayMenu
+  DESCRIPTION:  Displays the menu choices
+  INPUT:		
+     Parameters:	None
+	 File: None
+  OUTPUT:
+	 Return Val:    char
+     Parameters:	menuChoice - user input from the menu choices
+	 File: None
+  CALLS TO:	none
+*************************************************************************/
 char displayMenu ()
 {
 //local variables
@@ -334,12 +376,18 @@ char  menuChoice;
 return menuChoice;
 } // end of displayMenu
 
-// **************************************************************************
-// FUNCTION:     checkMenuChoice 
-// DESCRIPTION:  Validates user input menu choice re-prompting until correct
-// INPUT:        Parameter:  menuChoice -user input from menu choices
-// OUTPUT:       Parameter:  menuChoice  - validated menu choice
-// **************************************************************************
+/*************************************************************************
+  FUNCTION:	    checkMenuChoice
+  DESCRIPTION:  Validates user input menu choice re-prompting until correct
+  INPUT:		
+     Parameters:	menuChoice -user input from menu choices
+	 File: None
+  OUTPUT:
+	 Return Val:    char
+     Parameters:	menuChoice - validated menu choice
+	 File: None
+  CALLS TO:	displayMenu
+*************************************************************************/
 char checkMenuChoice (char& menuChoice)
 {	
  //loop until valid input 	
@@ -354,65 +402,28 @@ char checkMenuChoice (char& menuChoice)
 return menuChoice;
 } // end of checkMenuChoice
 
-
-///*************************************************************************
-//  FUNCTION:	    loadExistingData
-//  DESCRIPTION:  attempts to open input file and if not able to creates it
-//  INPUT:		Parameters:	housingList - array of records that stores listings
-//							listingCount - count of listings in the array of records							
-//  OUTPUT: 	    Parameters:	listingCount - count of listings in the array of records					
-//*************************************************************************/
-//
-//void loadExistingData (housingRec housingList[], int& listingCount) {
-////local variables
-//ofstream outData; // output file stream
-//char loadExisting,
-//	 errorChoice;
-//	do {
-//        cout << "Load exisiting data from a file (Y/N)? ";
-//        cin >> loadExisting;
-//        loadExisting = toupper (loadExisting);
-//    } while ( (loadExisting != 'Y') && (loadExisting != 'N') ); 
-//
-//	if (loadExisting == 'Y') { //append data to input file
-//		readListings (housingList, listingCount);		
-//		outData.open (LISTINGS_FILENAME.c_str() , ios::app );	
-//		
-//		// if file doesn't open present error and ask user if they
-//		// wish to exit or start with no data    
-//		if (!outData) { 
-//			do {
-//				cout << endl;
-//				cout << "Error opening data file" << endl ;
-//				cout << "Do you wish to exit or proceed with no data? (Q-QUIT or C-Continue)";
-//				cin >> errorChoice;
-//				errorChoice = toupper (errorChoice);
-//			} while ( (errorChoice == 'Q') && (errorChoice == 'C') );
-//		} // end if no file
-//	} // end of if load existing data
-//	else if (loadExisting == 'N') //create new  input file 
-//		outData.open (LISTINGS_FILENAME.c_str() );
-//	
-//	outData.close();
-//	return;
-//} // end of function loadExistingData
-//
 /*************************************************************************
   FUNCTION:	    addListings
-  DESCRIPTION:  adds new listing to the array of records
-  INPUT:		Parameters:	housingList - array of records that stores listings
-							count - count of listings in the array of records
-  OUTPUT: 	    Parameters:	housingList - updated array of records that stores listings
-							count - updated count of listings in the array of records												
+  DESCRIPTION:  adds new listing to the linked list
+  INPUT:		
+     Parameters:	first - linked list contians MLS listing data					
+	 File: None
+  OUTPUT:
+	 Return Val: void
+     Parameters:	first - linked list contians MLS listing data					
+	 File: None
+  CALLS TO:	displayListings, addListings, displayMLS, deleteItem, changeMLS,
+			writeListings, freeList
 *************************************************************************/
 void addListings (houseNode* &first)
 {  		
 	char pauseChar;           // to pause after memory allocation failure
-	char newListing = ' ';
-	int mls;
-	double price;
-	int temp;	
-	string zip, realtor;	
+	char newListing = ' '; //blank space
+	int mls; //MLS number
+	double price; //price for listing
+	int temp; //temp value for enum type
+	string zip, //zip code
+		realtor;	//realtor
 	houseNode *newNode,	 // used to allocate memory for list
 			  *lastNode = NULL,       // points to last node in list
 			  *firstNode = NULL;
@@ -465,20 +476,20 @@ return;
 
 /*************************************************************************
   FUNCTION:	    deleteItem
-  DESCRIPTION:  Implementation of deleting an item from an ordered list
-  INPUT:		Parameters:	itemToDel - listing to delete from the array of records
-							listingCount - array of records that stores listings
-							housingList - array of records that stores listings
-							deleted - flags to whther record was deleted or not							
-  OUTPUT: 	    Parameters:	housingList - updated array of records that stores listings
-							listingCount - array of records that stores listings
-							deleted - flags to whther record was deleted or not	
+  DESCRIPTION:  Delete the node from the linked list whose name field matches the delName
+	INPUT:		
+     Parameters:	first - linked list contians MLS listing data
+					delName - MLS listing to delete
+					success - flag if MLS was deleted 
+	 File: None
+	OUTPUT:
+	 Return Val: void
+     Parameters:	first - linked list contians MLS listing data
+					success - flag if MLS was deleted 
+	 File: None
+  CALLS TO:	none		
+ 
 *************************************************************************/
-//void deleteItem (int itemToDel, int& listingCount, housingRec housingList[], bool& deleted)
-//****************************************************************************
-// Delete the node from the linked list whose name field matches the delName
-// passed in.  Set value of success to true for success, false for failure.
-//****************************************************************************
 
 void deleteItem (houseNode* &first, int delName, bool& success)
 {        
@@ -520,9 +531,16 @@ void deleteItem (houseNode* &first, int delName, bool& success)
 
 /*************************************************************************
   FUNCTION:	    displayMLS
-  DESCRIPTION:  displays all MLS records from array of record
-  INPUT:		Parameters:	housingList - array of records that stores listings
-							count - array of records that stores listings							
+  DESCRIPTION:  displays all MLS records from the linked list
+  INPUT:		
+     Parameters:	first - linked list contians MLS listing data
+					emptyRecord - used to flag an empty record
+	 File: None
+  OUTPUT:
+	 Return Val: void
+     Parameters:	emptyRecord - used to flag an empty record
+	 File: None
+  CALLS TO:	none
 *************************************************************************/
 void displayMLS (houseNode* first, bool& emptyRecord)
 {
@@ -556,20 +574,24 @@ void displayMLS (houseNode* first, bool& emptyRecord)
 
 /*************************************************************************
   FUNCTION:	    writeListings
-  DESCRIPTION:  outputs array of records to output file
-  INPUT:		Parameters:	housingList - array of records that stores listings
-							count - array of records that stores listings
-  OUTPUT:		File : Writes to output file
+  DESCRIPTION:  outputs linked list to output file
+  INPUT:		
+     Parameters:	first - linked list contians MLS listing data
+	 File: None
+  OUTPUT:
+	 Return Val: void
+     Parameters:	none
+	 File: User-generated output text file
+  CALLS TO:	none
 *************************************************************************/
 void writeListings(houseNode* first)
 {
 //local variables
-  bool fileGood = false;
-  char overWrite;
-  string filename; //wher eth user wants to save th file
-  ofstream outData;         // output file stream  
-  //outData.open (LISTINGS_FILENAME.c_str() );
-  houseNode* tempPtr = first;
+  bool fileGood = false; //flag for good file read
+  char overWrite; //user input whther to overwrite data
+  string filename; //where the user wants to save th file
+  ofstream outData;         // output file stream    
+  houseNode* tempPtr = first; //node for linked list
 
   //promt user for file name
   cout << right << endl; 
@@ -580,7 +602,7 @@ void writeListings(houseNode* first)
 	  
 	  outData.open (filename.c_str(), ios_base::out | ios_base::in);  // will not create file)
 	  
-	  if (outData.good()) {
+	  if (outData.good()) { //if file exists prompt user to overwrite
 		cout << "Warning, file already exists, proceed? ";
 		cin >>overWrite;
 		  overWrite = toupper (overWrite);
@@ -603,7 +625,7 @@ void writeListings(houseNode* first)
       } //end if file exists 
   } while (fileGood != false);
 
-  if (fileGood == false){
+  if (fileGood == false){ // write output
 	  outData.open (filename.c_str() );
 	  while (tempPtr != NULL) {
 		outData << right <<  tempPtr->house.mlsNum
@@ -620,16 +642,21 @@ void writeListings(houseNode* first)
   return;
 } // end of writeListings
 
-
 /*************************************************************************
   FUNCTION:	    MLSinput
-  DESCRIPTION:  validates MLS input from user and re-prompts until correct
-  INPUT:		None
-  OUTPUT:		mlsIn - validated MLS input
+  DESCRIPTION:   validates MLS input from user and re-prompts until correct
+  INPUT:		
+     Parameters:	none
+	 File: None
+  OUTPUT:
+	 Return Val: int mlsIn - validated MLS number
+     Parameters:	none
+	 File: None
+  CALLS TO:	none
 *************************************************************************/
 int MLSinput ()
 {
-	int mlsIn;
+	int mlsIn; //MLS number from user
 	do
 	{
 		cout << "Enter MLS Number: (6 digit number): ";
@@ -645,13 +672,19 @@ int MLSinput ()
 
 /*************************************************************************
   FUNCTION:	    priceInput
-  DESCRIPTION:  validates proce input from user and re-prompts until correct
-  INPUT:		None
-  OUTPUT:		priceIn - validated price input
+  DESCRIPTION:  validates price input from user and re-prompts until correct
+  INPUT:		
+     Parameters:	none
+	 File: None
+  OUTPUT:
+	 Return Val: double priceIn - validated price
+     Parameters:	none
+	 File: None
+  CALLS TO:	none
 *************************************************************************/
 double priceInput () 
 {
-	double priceIn;
+	double priceIn; //price input from the user
 	do {
 		cout << "Enter asking price: ";
 		cin >> priceIn;
@@ -666,13 +699,19 @@ double priceInput ()
 
 /*************************************************************************
   FUNCTION:	    statusInput
-  DESCRIPTION:  validates statis input from user and re-prompts until correct
-  INPUT:		None
-  OUTPUT:		temp - validated status input
+  DESCRIPTION:  validates status input from user and re-prompts until correct
+  INPUT:		
+     Parameters:	none
+	 File: None
+  OUTPUT:
+	 Return Val: int temp - validated status to be enumerated
+     Parameters:	none
+	 File: None
+  CALLS TO:	none
 *************************************************************************/
 int statusInput () 
 {
-	int temp;
+	int temp; //input from the user
 	do {
 		cout << "Enter the status (0-Available, 1-Contract, or 2-Sold): ";
 		cin >>  temp;
@@ -688,16 +727,23 @@ int statusInput ()
 /*************************************************************************
   FUNCTION:	    zipInput
   DESCRIPTION:  validates zip code input from user and re-prompts until correct
-  INPUT:		None
-  OUTPUT:		zip - validated zip code
+  INPUT:		
+     Parameters:	none
+	 File: None
+  OUTPUT:
+	 Return Val: string zip - validated ZIP COde
+     Parameters:	none
+	 File: None
+  CALLS TO:	none
 *************************************************************************/
 string zipInput () 
 {
-	int boolNum,
-		boolZipLength;
-	string  zip;
-	int location,
-		cell;
+	int boolNum,       //keeps error code
+		boolZipLength; //keeps error code 
+	string  zip; //zip code 
+	int location, //location of string
+		cell; //string array location
+
 	do {
 		boolNum = 0;
 		boolZipLength = 0;
@@ -789,8 +835,14 @@ string zipInput ()
 /*************************************************************************
   FUNCTION:	    realtorInput
   DESCRIPTION:  validates realtorinput from user and re-prompts until correct
-  INPUT:		None
-  OUTPUT:		realtor - validated realtor
+  INPUT:		
+     Parameters:	none
+	 File: None
+  OUTPUT:
+	 Return Val: string realtor - validated Realtor
+     Parameters:	none
+	 File: None
+  CALLS TO:	none
 *************************************************************************/
 string realtorInput () 
 {
@@ -840,13 +892,18 @@ int boolRealtorLength,
 	return 	realtor;
 } // end of realtorInput
 
-///*************************************************************************
-//  FUNCTION:	    freeList
-//  DESCRIPTION:  deallocates memory 
-//  INPUT:		Parameters:	housingList - array of records that stores listings
-//							count - array of records that stores listings
-//  OUTPUT:		File : Writes to output file
-//*************************************************************************/
+/*************************************************************************
+  FUNCTION:	    freeList
+  DESCRIPTION:  deallocates memory 
+  INPUT:		
+     Parameters:	first - linked list contians MLS listing data					
+	 File: None
+  OUTPUT:
+	 Return Val: void
+     Parameters:	first - linked list contians MLS listing data					
+	 File: None
+  CALLS TO:	none
+*************************************************************************/
 void freeList (houseNode* &first)	
 {
 //local variables  
@@ -867,8 +924,14 @@ void freeList (houseNode* &first)
 /*************************************************************************
   FUNCTION:	    showDescription
   DESCRIPTION:  displays program description to screen
-  INPUT:		Parameters:	DESCRIPTION - description of what the program does
-
+  INPUT:		
+     Parameters:	DESCRIPTION - description of what the program does
+	 File: None
+  OUTPUT:
+	 Return Val: void
+     Parameters:	none
+	 File: None
+  CALLS TO:	none
 *************************************************************************/
 void showDescription (string DESCRIPTION){
     cout << endl;
@@ -881,19 +944,28 @@ void showDescription (string DESCRIPTION){
     cout << endl << endl;
 } // end of showDescription
 
+
 /*************************************************************************
   FUNCTION:	    changeMLS
-  DESCRIPTION:  displays program description to screen
-  INPUT:		Parameters:	DESCRIPTION - description of what the program does
-
+  DESCRIPTION:  reads MLS listings and updates the price
+  INPUT:		
+     Parameters:	first - linked list contians MLS listing data
+					emptyRecord - used to flag that there is no data
+	 File: CHANGES.TXT which contains the MLS and prices to be update
+  OUTPUT:
+	 Return Val: void
+     Parameters:	first - linked list contians MLS listing data
+					emptyRecord - used to flag that there is no data
+	 File: None
+  CALLS TO:	none
 *************************************************************************/
 
 void changeMLS (houseNode* &first, bool& emptyRecord)
 //void deleteItem (houseNode* &first, int delName)
 {
 	bool found;     // Flag - have not found the targetName yet
-	int  mls;                
-	double increase;
+	int  mls;       //MLS numer        
+	double increase; //incrase amount from the text file
 		   //price;
 	emptyRecord = false; //initialize flag to false
 	ifstream inData;	 
