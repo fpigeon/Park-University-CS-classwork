@@ -46,13 +46,17 @@ const string DESCRIPTION = "This program keeps track of homes for sale in the ar
              CLASSNUM = "CS362",
              ASSIGNMENT = "Week 7";
 const string LISTINGS_FILENAME = "LISTINGS.TXT";  //input file 
+const string CHANGES_FILENAME = "CHANGES.TXT";  //input file 
 enum status {AVAILABLE, CONTRACT, SOLD}; // listing status options
 const int MAX_LISTINGS = 750, // maximum number of patients
           ZIP_MAX_LENGTH = 10, // 10 chars in the zip code ie 12345-7890
 	      MID_POINT = 5, // middle point in the zip code string
 		  REALTOR_MAX_LENGTH = 20, // max legnth for realtor string
 		  MAX_MAX = 999999, //max MLS and Price
-		  MIN_MLS = 100000; //min MLS NUM
+		  MIN_MLS = 100000, //min MLS NUM
+		  PRICE_MIN = 1, // min price 
+		  MIN_STATUS = 0, //status min
+		  MAX_STATUS = 2; //status max
 const int ERROR_1 = 1; // unique error message
 const int ERROR_2 = 2; // unique error message
 const int ERROR_3 = 3; // unique error message
@@ -82,7 +86,7 @@ char checkMenuChoice (char& menuChoice);
 char displayMenu ();
 void menuAction (char menuChoice, houseNode* &first, bool& quit);
 void addListings (houseNode* &first);
-void displayMLS (houseNode* first);
+void displayMLS (houseNode* first, bool& emptyRecord);
 void deleteItem (houseNode* &first, int delName, bool& success);
 void writeListings(houseNode* first);
 int MLSinput ();
@@ -90,6 +94,8 @@ double priceInput ();
 int statusInput () ;
 string zipInput ();
 string realtorInput ();
+void freeList (houseNode* &first);	
+void changeMLS (houseNode* &first, bool& emptyRecord);
 
 /******************************************************************************
 //  FUNCTION:	  main
@@ -130,7 +136,8 @@ int main()
 void menuAction (char menuChoice, houseNode* &first, bool& quit)
 {
  int mlsDelete; //user input to delete an MLS Listing
- bool deleted; // index to delete
+ bool deleted, // index to delete
+      emptyRecord; //flag if there are no data in the list
  char commitChange; // user input to commit changes
 
 switch (menuChoice) {
@@ -145,28 +152,35 @@ switch (menuChoice) {
 		addListings (first);
 		break;
 	case 'R': // Remove a Listing
-		cout << "You chose option R - Remove a Listing" << endl;		
-		displayMLS (first); //display the MLS options from the list
-		mlsDelete = MLSinput(); //error check input
-		deleteItem (first, mlsDelete, deleted); //delete node from the list
-		if (deleted == false) //display error if not found
-            cout << mlsDelete << " not found in list" << endl;
-		else { // delete the listing            
-            cout << "MLS Listing " << mlsDelete <<
-                 " was deleted successfully" << endl;			
-        } // end else
+		cout << "You chose option R - Remove a Listing" << endl;
+		displayMLS (first, emptyRecord); //display avail MLS num
+		if (emptyRecord == true) //no data
+			cout << "Error - There is no records in the file" << endl;
+		else { //yes data continue on
+			mlsDelete = MLSinput(); //error check input
+			deleteItem (first, mlsDelete, deleted); //delete node from the list
+			if (deleted == false) //display error if not found
+				cout << mlsDelete << " not found in list" << endl;
+			else { // delete the listing            
+				cout << "MLS Listing " << mlsDelete <<
+					 " was deleted successfully" << endl;			
+			} // end else
+		} //end else data in file
 		break;
 	case 'C':  //Add a Listing		
 		cout << "You chose option C - Change asking price" << endl;
+		changeMLS (first, emptyRecord);
+		if (emptyRecord == true) //no data
+			cout << "Error - There is no records in the file" << endl;
 		break;
 	case 'E': // Exit		
 		cout << "Do you want to commit changes to file (Y/N)?: ";
 		cin >> commitChange;
 		commitChange = toupper (commitChange);
 		if (commitChange == 'Y')
-		//writeListings(housingList, listingCount);
-		writeListings(first);
+			writeListings(first);		
 		quit = true;
+		freeList (first);
 		break;
 } //end switch
 
@@ -402,6 +416,7 @@ void addListings (houseNode* &first)
 	houseNode *newNode,	 // used to allocate memory for list
 			  *lastNode = NULL,       // points to last node in list
 			  *firstNode = NULL;
+	cout << right << endl; 
 	do  {
 		// create new node and store data read into it     
 		newNode = new (nothrow) houseNode;
@@ -464,7 +479,7 @@ return;
 // Delete the node from the linked list whose name field matches the delName
 // passed in.  Set value of success to true for success, false for failure.
 //****************************************************************************
-//void deleteNode (student* &listTop, string delName, bool& success)
+
 void deleteItem (houseNode* &first, int delName, bool& success)
 {        
   houseNode *here,                           // Node being checked
@@ -509,27 +524,32 @@ void deleteItem (houseNode* &first, int delName, bool& success)
   INPUT:		Parameters:	housingList - array of records that stores listings
 							count - array of records that stores listings							
 *************************************************************************/
-void displayMLS (houseNode* first)
+void displayMLS (houseNode* first, bool& emptyRecord)
 {
-
+ emptyRecord = false; //initialize flag to false
  houseNode* tempPtr = first;
  int newLine = 1; //for add a new line
-	 cout << endl; 
-	 cout << "These are the MLS Listings stored on file:" << endl;
-	 cout << "--------------------------------------------------" << endl;
+	 cout << right << endl; 
+	 if (tempPtr == NULL) {		 
+		 emptyRecord = true;
+	 } //emnd if no records
+	 else {
+		 cout << "These are the MLS Listings stored on file:" << endl;
+		 cout << "--------------------------------------------------" << endl;
 
-	 while (tempPtr != NULL) {
-		  cout << setw(7) << tempPtr->house.mlsNum;
-		  if (newLine == 6) { // add a new line after displaying 6 listings
-				cout << endl;
-				newLine = 1;
-		  }
-		  else				
-		  //increment counters
-			newLine++;
-		  tempPtr = tempPtr->next;
-	 }   // end while
-	 cout << endl; 
+		 while (tempPtr != NULL) {
+			  cout << setw(7) << tempPtr->house.mlsNum;
+			  if (newLine == 6) { // add a new line after displaying 6 listings
+					cout << endl;
+					newLine = 1;
+			  }
+			  else				
+			  //increment counters
+				newLine++;
+			  tempPtr = tempPtr->next;
+		 }   // end while
+		 cout << endl; 
+	 } // end if data exists
 
 	 return;
 } // end displayMLS
@@ -552,7 +572,7 @@ void writeListings(houseNode* first)
   houseNode* tempPtr = first;
 
   //promt user for file name
- 
+  cout << right << endl; 
   do {
 	  cout << endl << "Enter data filename: ";
 	  cin >> filename;
@@ -636,10 +656,10 @@ double priceInput ()
 		cout << "Enter asking price: ";
 		cin >> priceIn;
 		
-		if ( (priceIn < 1) || (priceIn > MAX_MAX) ) 
+		if ( (priceIn <PRICE_MIN) || (priceIn > MAX_MAX) ) 
 			cout << "Invalid input.  Must be a positive amount." << endl;		
 
-	} while ( (priceIn < 1) || (priceIn > MAX_MAX) );
+	} while ( (priceIn < PRICE_MIN) || (priceIn > MAX_MAX) );
 	
 		return 	priceIn;
 } // end of priceInput
@@ -657,10 +677,10 @@ int statusInput ()
 		cout << "Enter the status (0-Available, 1-Contract, or 2-Sold): ";
 		cin >>  temp;
 		
-		if ( (temp < 0) || (temp > 2) ) 
+		if ( (temp < MIN_STATUS) || (temp > MAX_STATUS) ) 
 			cout << "Invalid input.  Must be 0, 1, or 2." << endl;		
 
-	} while ( (temp < 0) || (temp > 2) );
+	} while ( (temp < MIN_STATUS) || (temp > MAX_STATUS) );
 	
 	return 	temp;
 } // end of statusInput
@@ -816,7 +836,7 @@ int boolRealtorLength,
 			} // no non alphas
 	
 	} while ( (boolRealtorLength > 0) || (boolAlpha > 0 ));
-	
+	realtor = " " + realtor;
 	return 	realtor;
 } // end of realtorInput
 
@@ -827,22 +847,22 @@ int boolRealtorLength,
 //							count - array of records that stores listings
 //  OUTPUT:		File : Writes to output file
 //*************************************************************************/
-//void freeList (housingRec* &listTop)	
-//{
-////local variables  
-// housingRec *freeNode, *nextNode; //creates 2 temporary pointers
-// freeNode = listTop;
-// while (freeNode != NULL ) { //while not the end of the list
-//	nextNode = freeNode->next; // point nextode to the node
-//							   // following freeNode
-//	delete freeNode; // deallocate the node freeNode points to
-//	freeNode = nextNode;  // point freeNode to the next node in the list
-// }//end while
-//  
-// // afterall nodes have been de-allocated reinitailize to empty list
-// listTop = NULL;
-// return;
-//} // end of freeList
+void freeList (houseNode* &first)	
+{
+//local variables  
+ houseNode *freeNode, *nextNode; //creates 2 temporary pointers
+ freeNode = first;
+ while (freeNode != NULL ) { //while not the end of the list
+	nextNode = freeNode->next; // point nextode to the node
+							   // following freeNode
+	delete freeNode; // deallocate the node freeNode points to
+	freeNode = nextNode;  // point freeNode to the next node in the list
+ }//end while
+  
+ // afterall nodes have been de-allocated reinitailize to empty list
+ first = NULL;
+ return;
+} // end of freeList
 
 /*************************************************************************
   FUNCTION:	    showDescription
@@ -860,3 +880,70 @@ void showDescription (string DESCRIPTION){
     cout << "------------------------------------------------------" << endl;
     cout << endl << endl;
 } // end of showDescription
+
+/*************************************************************************
+  FUNCTION:	    changeMLS
+  DESCRIPTION:  displays program description to screen
+  INPUT:		Parameters:	DESCRIPTION - description of what the program does
+
+*************************************************************************/
+
+void changeMLS (houseNode* &first, bool& emptyRecord)
+//void deleteItem (houseNode* &first, int delName)
+{
+	bool found;     // Flag - have not found the targetName yet
+	int  mls;                
+	double increase;
+		   //price;
+	emptyRecord = false; //initialize flag to false
+	ifstream inData;	 
+	inData.open (CHANGES_FILENAME.c_str() );
+	
+	houseNode* tempPtr;	
+		cout << right << endl; 
+		if (inData) { // if file opens   
+			tempPtr = first; //initialize pointer to see if there is data
+			if (tempPtr == NULL) // stop no data
+				emptyRecord = true;
+			else { //continue on  	 
+				//Output Header 
+				cout << "MLS Number" << setw(20) << "New Asking Price" << endl;
+				cout << "----------" << setw(20)<< "------------------" << endl;
+		
+				inData >> mls; // priming read			
+				//student *tryStu = listTop; // pointer, initialized to top node
+				while (inData)
+				{
+					inData >> increase;
+            
+					tempPtr = first;
+					found = false; 
+			
+					while ( (tempPtr != NULL) && (found != true) ) { // while haven’t found the student
+                     														// we are looking for (targetName)
+							                     							// AND haven't hit end of list...				
+						if (tempPtr->house.mlsNum == mls)
+						{ // Is targetName the name in this
+							tempPtr->house.price = tempPtr->house.price + increase;// if targetName is never found in the list.	;
+							found = true; // and set found flag to true
+					
+							cout << setw(6) << mls << setw(12) << tempPtr->house.price << endl;
+						}
+						else					
+							tempPtr = tempPtr->next; // If not, move to next node in list
+			
+					}  //end while
+			
+					inData >> mls;			
+					    
+				} //end while data
+		
+			} //end there is data	 
+		
+		} //end if data opens
+		else 
+			 cout << "Input File does not exist"<< endl;
+	inData.close(); 
+	
+	return;
+} //end changeMLS
