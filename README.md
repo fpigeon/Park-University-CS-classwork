@@ -1,4 +1,4 @@
-#Regis University Computer Science projects
-These are my projects from my CS projects from Regis University.
+#Regis University
+These are my projects from my Computer Science projects from Regis University.
 
 
