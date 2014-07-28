@@ -1,4 +1,4 @@
-week4assignment
-===============
-Week 4 Assignment to create a Realtor's array of records and menu list.
+#Regis University Computer Science projects
+These are my projects from my CS projects from Regis University.
+
 
